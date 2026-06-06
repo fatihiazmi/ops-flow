@@ -4,6 +4,8 @@ import { logger } from "hono/logger";
 import { env } from "./config/env.js";
 import { errorMiddleware } from "./middleware/error.middleware.js";
 import { healthRoutes, readyRoutes } from "./routes/health.routes.js";
+import { authRoutes } from "./modules/auth/auth.routes.js";
+import { ticketRoutes } from "./modules/tickets/ticket.routes.js";
 
 const app = new Hono();
 
@@ -12,6 +14,8 @@ app.use(logger());
 
 app.route("/health", healthRoutes);
 app.route("/ready", readyRoutes);
+app.route("/auth", authRoutes);
+app.route("/tickets", ticketRoutes);
 
 app.onError(errorMiddleware);
 

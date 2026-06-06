@@ -10,3 +10,5 @@ export interface ReadyResponse {
   postgres: string;
   redis: string;
 }
+
+export * from "./types/index.js";

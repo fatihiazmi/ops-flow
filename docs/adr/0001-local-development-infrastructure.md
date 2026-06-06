@@ -17,7 +17,7 @@ We need a reproducible local development environment for a full-stack Vue + Hono
 
 ## Decision
 
-Use Docker Compose with services for web, api, postgres, redis, and adminer.
+Use Docker Compose with services for web, api, postgres, redis, and pgAdmin.
 
 ## Rationale
 
@@ -32,7 +32,7 @@ Docker Compose provides the best balance of realism and control for a local deve
 - Local database ownership allows schema experimentation
 - Easy interview demonstration without internet dependencies
 - Supports migrations, seed data, and complex queries later
-- Includes Adminer for easy database inspection
+- Includes pgAdmin for easy database inspection
 
 ### Negative
 
