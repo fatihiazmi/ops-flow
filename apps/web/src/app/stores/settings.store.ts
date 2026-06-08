@@ -1,0 +1,191 @@
+import { defineStore } from "pinia";
+import { ref, watch } from "vue";
+
+export type Theme = "system" | "light" | "dark";
+export type TicketTableDensity = "comfortable" | "compact";
+export type DefaultTicketPageSize = 10 | 20 | 50;
+
+const STORAGE_KEY = "opsflow:settings:v1";
+
+interface StoredSettings {
+  theme: Theme;
+  ticketTableDensity: TicketTableDensity;
+  defaultTicketPageSize: DefaultTicketPageSize;
+  showSuccessToasts: boolean;
+  showDashboardCacheBadge: boolean;
+  showSlaWarningBanners: boolean;
+}
+
+function getDefaults(): StoredSettings {
+  return {
+    theme: "system",
+    ticketTableDensity: "comfortable",
+    defaultTicketPageSize: 20,
+    showSuccessToasts: true,
+    showDashboardCacheBadge: true,
+    showSlaWarningBanners: true,
+  };
+}
+
+function loadFromStorage(): StoredSettings {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return getDefaults();
+    const parsed = JSON.parse(raw);
+    const defaults = getDefaults();
+    return { ...defaults, ...parsed };
+  } catch {
+    return getDefaults();
+  }
+}
+
+function applyThemeClass(theme: Theme) {
+  if (theme === "dark") {
+    document.documentElement.classList.add("dark");
+  } else if (theme === "light") {
+    document.documentElement.classList.remove("dark");
+  } else {
+    const prefersDark = window.matchMedia(
+      "(prefers-color-scheme: dark)"
+    ).matches;
+    document.documentElement.classList.toggle("dark", prefersDark);
+  }
+}
+
+function readThemeFromStorage(): Theme {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return "system";
+    const parsed = JSON.parse(raw);
+    return parsed.theme || "system";
+  } catch {
+    return "system";
+  }
+}
+
+export function applyInitialTheme() {
+  applyThemeClass(readThemeFromStorage());
+}
+
+let systemThemeQuery: MediaQueryList | null = null;
+
+function watchSystemTheme(store: ReturnType<typeof useSettingsStore>) {
+  if (systemThemeQuery) {
+    systemThemeQuery.removeEventListener("change", () => {});
+  }
+  systemThemeQuery = window.matchMedia("(prefers-color-scheme: dark)");
+  systemThemeQuery.addEventListener("change", () => {
+    if (store.theme === "system") {
+      applyThemeClass("system");
+    }
+  });
+}
+
+export const useSettingsStore = defineStore("settings", () => {
+  const stored = loadFromStorage();
+
+  const theme = ref<Theme>(stored.theme);
+  const ticketTableDensity = ref<TicketTableDensity>(
+    stored.ticketTableDensity
+  );
+  const defaultTicketPageSize = ref<DefaultTicketPageSize>(
+    stored.defaultTicketPageSize
+  );
+  const showSuccessToasts = ref<boolean>(stored.showSuccessToasts);
+  const showDashboardCacheBadge = ref<boolean>(stored.showDashboardCacheBadge);
+  const showSlaWarningBanners = ref<boolean>(stored.showSlaWarningBanners);
+
+  function persist() {
+    const payload: StoredSettings = {
+      theme: theme.value,
+      ticketTableDensity: ticketTableDensity.value,
+      defaultTicketPageSize: defaultTicketPageSize.value,
+      showSuccessToasts: showSuccessToasts.value,
+      showDashboardCacheBadge: showDashboardCacheBadge.value,
+      showSlaWarningBanners: showSlaWarningBanners.value,
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+  }
+
+  function hydrateFromStorage() {
+    const data = loadFromStorage();
+    theme.value = data.theme;
+    ticketTableDensity.value = data.ticketTableDensity;
+    defaultTicketPageSize.value = data.defaultTicketPageSize;
+    showSuccessToasts.value = data.showSuccessToasts;
+    showDashboardCacheBadge.value = data.showDashboardCacheBadge;
+    showSlaWarningBanners.value = data.showSlaWarningBanners;
+  }
+
+  function resetToDefaults() {
+    const defaults = getDefaults();
+    theme.value = defaults.theme;
+    ticketTableDensity.value = defaults.ticketTableDensity;
+    defaultTicketPageSize.value = defaults.defaultTicketPageSize;
+    showSuccessToasts.value = defaults.showSuccessToasts;
+    showDashboardCacheBadge.value = defaults.showDashboardCacheBadge;
+    showSlaWarningBanners.value = defaults.showSlaWarningBanners;
+    persist();
+    applyThemeClass(theme.value);
+  }
+
+  function setTheme(newTheme: Theme) {
+    theme.value = newTheme;
+    applyThemeClass(newTheme);
+    persist();
+  }
+
+  function setTicketTableDensity(density: TicketTableDensity) {
+    ticketTableDensity.value = density;
+    persist();
+  }
+
+  function setDefaultTicketPageSize(pageSize: DefaultTicketPageSize) {
+    defaultTicketPageSize.value = pageSize;
+    persist();
+  }
+
+  function setShowSuccessToasts(enabled: boolean) {
+    showSuccessToasts.value = enabled;
+    persist();
+  }
+
+  function setShowDashboardCacheBadge(enabled: boolean) {
+    showDashboardCacheBadge.value = enabled;
+    persist();
+  }
+
+  function setShowSlaWarningBanners(enabled: boolean) {
+    showSlaWarningBanners.value = enabled;
+    persist();
+  }
+
+  watch(theme, (newTheme) => {
+    applyThemeClass(newTheme);
+    if (newTheme === "system") {
+      watchSystemTheme(useSettingsStore());
+    }
+  });
+
+  if (theme.value === "system") {
+    watchSystemTheme(useSettingsStore());
+  }
+
+  return {
+    theme,
+    ticketTableDensity,
+    defaultTicketPageSize,
+    showSuccessToasts,
+    showDashboardCacheBadge,
+    showSlaWarningBanners,
+    hydrateFromStorage,
+    persist,
+    resetToDefaults,
+    setTheme,
+    setTicketTableDensity,
+    setDefaultTicketPageSize,
+    setShowSuccessToasts,
+    setShowDashboardCacheBadge,
+    setShowSlaWarningBanners,
+  };
+});

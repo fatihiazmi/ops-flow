@@ -5,9 +5,13 @@ export function setupAuthGuard(router: Router) {
   router.beforeEach((to, _from, next) => {
     const authStore = useAuthStore();
 
-    if (to.meta.requiresAuth && !authStore.isAuthenticated) {
+    // For protected routes: require at minimum a token.
+    // User info is loaded asynchronously via initializeAuthFromStorage.
+    // This avoids a redirect loop on page reload where the token exists
+    // but the /auth/me call hasn't completed yet.
+    if (to.meta.requiresAuth && !authStore.token) {
       next({ path: "/login", query: { redirect: to.fullPath } });
-    } else if (to.path === "/login" && authStore.isAuthenticated) {
+    } else if (to.path === "/login" && authStore.token) {
       next("/tickets");
     } else {
       next();

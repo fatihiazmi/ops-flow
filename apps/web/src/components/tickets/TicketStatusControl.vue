@@ -1,12 +1,12 @@
 <template>
   <div class="flex items-center space-x-2">
-    <span class="text-sm text-gray-500">Status:</span>
+    <span class="text-sm text-gray-500 dark:text-gray-400">Status:</span>
     <span class="font-medium">{{ statusLabel }}</span>
     <select
       v-if="validNextStatuses.length > 0"
       v-model="selectedStatus"
       :disabled="isUpdating"
-      class="text-sm rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+      class="text-sm rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 focus:ring-blue-500"
       @change="handleChange"
     >
       <option value="">Change status...</option>
@@ -20,7 +20,7 @@
     </select>
     <span
       v-else
-      class="text-sm text-gray-500"
+      class="text-sm text-gray-500 dark:text-gray-400"
     >No further transitions</span>
   </div>
 </template>

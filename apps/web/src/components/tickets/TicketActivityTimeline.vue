@@ -1,19 +1,19 @@
 <template>
   <div>
-    <h3 class="text-lg font-medium text-gray-900 mb-3">Activity</h3>
+    <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-3">Activity</h3>
 
     <div
       v-if="isLoading"
       class="text-center py-4"
     >
-      <p class="text-gray-500 text-sm">Loading activity...</p>
+      <p class="text-gray-500 dark:text-gray-400 text-sm">Loading activity...</p>
     </div>
 
     <div
       v-else-if="activity.length === 0"
       class="text-center py-4"
     >
-      <p class="text-gray-500 text-sm">No activity yet.</p>
+      <p class="text-gray-500 dark:text-gray-400 text-sm">No activity yet.</p>
     </div>
 
     <ul
@@ -26,11 +26,11 @@
         class="flex items-start space-x-3"
       >
         <div class="flex-1">
-          <p class="text-sm text-gray-900">
+          <p class="text-sm text-gray-900 dark:text-gray-100">
             <span class="font-medium">{{ event.actor.name }}</span>
             {{ formatEvent(event) }}
           </p>
-          <p class="text-xs text-gray-500 mt-0.5">{{ formatDate(event.createdAt) }}</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ formatDate(event.createdAt) }}</p>
         </div>
       </li>
     </ul>

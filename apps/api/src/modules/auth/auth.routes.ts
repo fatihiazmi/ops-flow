@@ -3,6 +3,10 @@ import { loginRequestSchema } from "./auth.schemas.js";
 import { login, getUserFromToken } from "./auth.service.js";
 import { authMiddleware } from "../../middleware/auth.middleware.js";
 import { success, errorResponse } from "../../utils/api-response.js";
+import {
+  recordFailedLoginAttempt,
+  resetLoginRateLimit,
+} from "../../services/rate-limit.service.js";
 
 const authRoutes = new Hono();
 
@@ -18,11 +22,16 @@ authRoutes.post("/login", async (c) => {
 
   const result = await login(parsed.data.email, parsed.data.password);
   if (!result) {
+    const rateLimitResponse = await recordFailedLoginAttempt(c);
+    if (rateLimitResponse) return rateLimitResponse;
+
     return c.json(
       errorResponse("UNAUTHORIZED", "Invalid email or password"),
       401
     );
   }
+
+  await resetLoginRateLimit(c);
 
   return c.json(success({ token: result.token, user: result.user }));
 });

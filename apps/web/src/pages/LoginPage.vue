@@ -1,7 +1,7 @@
 <template>
-  <div class="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
-    <div class="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
-      <h1 class="text-2xl font-bold text-gray-900 mb-6 text-center">
+  <div class="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col items-center justify-center p-4">
+    <div class="max-w-md w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6 text-center">
         OpsFlow Login
       </h1>
 
@@ -9,28 +9,28 @@
         <div>
           <label
             for="email"
-            class="block text-sm font-medium text-gray-700"
+            class="block text-sm font-medium text-gray-700 dark:text-gray-300"
           >Email</label>
           <input
             id="email"
             v-model="email"
             type="email"
             required
-            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500"
           />
         </div>
 
         <div>
           <label
             for="password"
-            class="block text-sm font-medium text-gray-700"
+            class="block text-sm font-medium text-gray-700 dark:text-gray-300"
           >Password</label>
           <input
             id="password"
             v-model="password"
             type="password"
             required
-            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500"
           />
         </div>
 
@@ -45,7 +45,7 @@
 
       <div
         v-if="authStore.error"
-        class="mt-4 p-3 bg-red-50 rounded-md text-sm text-red-700"
+        class="mt-4 p-3 bg-red-50 dark:bg-red-900/30 rounded-md text-sm text-red-700 dark:text-red-300"
       >
         {{ authStore.error }}
       </div>

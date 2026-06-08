@@ -7,6 +7,7 @@ import { healthRoutes, readyRoutes } from "./routes/health.routes.js";
 import { authRoutes } from "./modules/auth/auth.routes.js";
 import { ticketRoutes } from "./modules/tickets/ticket.routes.js";
 import { userRoutes } from "./modules/users/user.routes.js";
+import { dashboardRoutes } from "./modules/dashboard/dashboard.routes.js";
 
 const app = new Hono();
 
@@ -18,6 +19,7 @@ app.route("/ready", readyRoutes);
 app.route("/auth", authRoutes);
 app.route("/tickets", ticketRoutes);
 app.route("/users", userRoutes);
+app.route("/dashboard", dashboardRoutes);
 
 app.onError(errorMiddleware);
 

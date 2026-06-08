@@ -43,9 +43,9 @@ export const useAuthStore = defineStore("auth", () => {
     localStorage.removeItem("opsflow_token");
   }
 
-  function initializeAuthFromStorage() {
+  async function initializeAuthFromStorage() {
     if (token.value) {
-      fetchMe();
+      await fetchMe();
     }
   }
 

@@ -1,17 +1,17 @@
 <template>
   <div>
-    <h3 class="text-lg font-medium text-gray-900 mb-3">Add Comment</h3>
+    <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-3">Add Comment</h3>
     <form @submit.prevent="handleSubmit">
       <div>
         <label
           for="comment-body"
-          class="block text-sm font-medium text-gray-700"
+          class="block text-sm font-medium text-gray-700 dark:text-gray-300"
         >Comment</label>
         <textarea
           id="comment-body"
           v-model="body"
           rows="3"
-          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 focus:ring-blue-500"
           :class="{ 'border-red-500': error }"
         />
         <p

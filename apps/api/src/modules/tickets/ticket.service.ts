@@ -22,6 +22,7 @@ import { isValidStatusTransition } from "./ticket.workflow.js";
 import { AppError } from "../../utils/errors.js";
 import { listSuccess, success } from "../../utils/api-response.js";
 import { db } from "../../db/drizzle.js";
+import { invalidateDashboardCache } from "../dashboard/dashboard.service.js";
 import type { JWTPayload } from "jose";
 
 export async function listTickets(query: unknown) {
@@ -92,6 +93,8 @@ export async function createTicket(body: unknown, user: JWTPayload) {
     return newTicket;
   });
 
+  invalidateDashboardCache();
+
   return success({
     id: ticket.id,
     title: ticket.title,
@@ -146,6 +149,8 @@ export async function patchTicket(id: string, body: unknown, user: JWTPayload) {
     return result;
   });
 
+  invalidateDashboardCache();
+
   return success({
     id: updated.id,
     title: updated.title,
@@ -195,6 +200,8 @@ export async function changeTicketStatus(id: string, body: unknown, user: JWTPay
     return result;
   });
 
+  invalidateDashboardCache();
+
   return success({
     id: updated.id,
     status: updated.status as "open" | "in_progress" | "resolved" | "closed",
@@ -242,6 +249,8 @@ export async function changeTicketAssignee(id: string, body: unknown, user: JWTP
   const assignee = newAssigneeId
     ? await findUserById(newAssigneeId)
     : null;
+
+  invalidateDashboardCache();
 
   return success({
     id: updated.id,
@@ -297,6 +306,8 @@ export async function addTicketComment(ticketId: string, body: unknown, user: JW
   });
 
   const author = await findUserById(actorId);
+
+  invalidateDashboardCache();
 
   return success({
     id: comment.id,

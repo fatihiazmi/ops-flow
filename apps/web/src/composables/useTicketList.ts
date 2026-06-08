@@ -1,11 +1,13 @@
 import { ref, watch, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { getTickets } from "../services/ticketService.js";
+import { useSettingsStore } from "../app/stores/settings.store.js";
 import type { ApiListResponse, TicketListItem } from "@opsflow/shared";
 
 export function useTicketList() {
   const route = useRoute();
   const router = useRouter();
+  const settings = useSettingsStore();
 
   const tickets = ref<TicketListItem[]>([]);
   const meta = ref<ApiListResponse<TicketListItem>["meta"] | null>(null);
@@ -14,7 +16,7 @@ export function useTicketList() {
 
   const filters = computed(() => ({
     page: Number(route.query.page) || 1,
-    pageSize: Number(route.query.pageSize) || 20,
+    pageSize: Number(route.query.pageSize) || settings.defaultTicketPageSize,
     sortBy: (route.query.sortBy as string) || "createdAt",
     sortDirection: (route.query.sortDirection as string) || "desc",
     status: (route.query.status as string) || undefined,
