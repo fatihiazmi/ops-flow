@@ -1,7 +1,9 @@
 /// <reference types="../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
 import { useAuthStore } from "../../app/stores/auth.store.js";
+import { useNotificationStore } from "../../app/stores/notification.store.js";
 import { useRouter } from "vue-router";
 const authStore = useAuthStore();
+const notificationStore = useNotificationStore();
 const router = useRouter();
 function logout() {
     authStore.logout();
@@ -89,6 +91,22 @@ const __VLS_12 = {}.RouterView;
 // @ts-ignore
 const __VLS_13 = __VLS_asFunctionalComponent(__VLS_12, new __VLS_12({}));
 const __VLS_14 = __VLS_13({}, ...__VLS_functionalComponentArgsRest(__VLS_13));
+__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+    ...{ class: "fixed top-4 right-4 z-50 space-y-2" },
+});
+for (const [notification] of __VLS_getVForSourceType((__VLS_ctx.notificationStore.notifications))) {
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        key: (notification.id),
+        role: "alert",
+        ...{ class: ([
+                'px-4 py-3 rounded-lg shadow-lg text-sm font-medium',
+                notification.type === 'success'
+                    ? 'bg-green-50 text-green-800 border border-green-200'
+                    : 'bg-red-50 text-red-800 border border-red-200',
+            ]) },
+    });
+    (notification.message);
+}
 /** @type {__VLS_StyleScopedClasses['min-h-screen']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-gray-50']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-white']} */ ;
@@ -144,11 +162,17 @@ const __VLS_14 = __VLS_13({}, ...__VLS_functionalComponentArgsRest(__VLS_13));
 /** @type {__VLS_StyleScopedClasses['mx-auto']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['py-6']} */ ;
+/** @type {__VLS_StyleScopedClasses['fixed']} */ ;
+/** @type {__VLS_StyleScopedClasses['top-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['right-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['z-50']} */ ;
+/** @type {__VLS_StyleScopedClasses['space-y-2']} */ ;
 var __VLS_dollars;
 const __VLS_self = (await import('vue')).defineComponent({
     setup() {
         return {
             authStore: authStore,
+            notificationStore: notificationStore,
             logout: logout,
         };
     },

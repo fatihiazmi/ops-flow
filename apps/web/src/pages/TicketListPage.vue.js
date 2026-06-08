@@ -1,6 +1,7 @@
 /// <reference types="../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
 import { useRouter } from "vue-router";
 import { useTicketList } from "../composables/useTicketList.js";
+import CreateTicketDialog from "../components/tickets/CreateTicketDialog.vue";
 const router = useRouter();
 const { tickets, meta, isLoading, error, filters, fetchTickets, updateQuery } = useTicketList();
 debugger; /* PartiallyEnd: #3632/scriptSetup.vue */
@@ -8,9 +9,27 @@ const __VLS_ctx = {};
 let __VLS_components;
 let __VLS_directives;
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.h1, __VLS_intrinsicElements.h1)({
-    ...{ class: "text-2xl font-bold text-gray-900 mb-6" },
+__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+    ...{ class: "flex justify-between items-center mb-6" },
 });
+__VLS_asFunctionalElement(__VLS_intrinsicElements.h1, __VLS_intrinsicElements.h1)({
+    ...{ class: "text-2xl font-bold text-gray-900" },
+});
+/** @type {[typeof CreateTicketDialog, ]} */ ;
+// @ts-ignore
+const __VLS_0 = __VLS_asFunctionalComponent(CreateTicketDialog, new CreateTicketDialog({
+    ...{ 'onCreated': {} },
+}));
+const __VLS_1 = __VLS_0({
+    ...{ 'onCreated': {} },
+}, ...__VLS_functionalComponentArgsRest(__VLS_0));
+let __VLS_3;
+let __VLS_4;
+let __VLS_5;
+const __VLS_6 = {
+    onCreated: (__VLS_ctx.fetchTickets)
+};
+var __VLS_2;
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "mb-6 flex flex-wrap gap-4" },
 });
@@ -209,10 +228,13 @@ else {
         });
     }
 }
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-between']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['mb-6']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-2xl']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-bold']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-gray-900']} */ ;
-/** @type {__VLS_StyleScopedClasses['mb-6']} */ ;
 /** @type {__VLS_StyleScopedClasses['mb-6']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex-wrap']} */ ;
@@ -358,6 +380,7 @@ var __VLS_dollars;
 const __VLS_self = (await import('vue')).defineComponent({
     setup() {
         return {
+            CreateTicketDialog: CreateTicketDialog,
             router: router,
             tickets: tickets,
             meta: meta,

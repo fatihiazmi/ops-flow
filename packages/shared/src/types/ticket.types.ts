@@ -33,3 +33,50 @@ export interface TicketDetail {
   updatedAt: string;
   dueAt: string | null;
 }
+
+export interface CreateTicketRequest {
+  title: string;
+  description: string;
+  priority: TicketPriority;
+  category: TicketCategory;
+  assigneeId?: string | null;
+  dueAt?: string | null;
+}
+
+export interface UpdateTicketRequest {
+  title?: string;
+  description?: string;
+  priority?: TicketPriority;
+  category?: TicketCategory;
+  dueAt?: string | null;
+}
+
+export interface UpdateTicketStatusRequest {
+  status: TicketStatus;
+}
+
+export interface UpdateTicketAssigneeRequest {
+  assigneeId: string | null;
+}
+
+export interface AddCommentRequest {
+  body: string;
+}
+
+export interface Comment {
+  id: string;
+  body: string;
+  author: TicketAssignee;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TicketActivity {
+  id: string;
+  eventType: "ticket_created" | "status_changed" | "priority_changed" | "assignee_changed" | "comment_added";
+  fromValue: string | null;
+  toValue: string | null;
+  metadata: Record<string, unknown> | null;
+  actor: TicketAssignee;
+  createdAt: string;
+}

@@ -4,6 +4,12 @@ import type {
   ApiResponse,
   TicketListItem,
   TicketDetail,
+  CreateTicketRequest,
+  UpdateTicketRequest,
+  UpdateTicketStatusRequest,
+  UpdateTicketAssigneeRequest,
+  Comment,
+  TicketActivity,
 } from "@opsflow/shared";
 
 export interface TicketListParams {
@@ -41,4 +47,50 @@ export async function getTicketById(
   id: string
 ): Promise<ApiResponse<TicketDetail>> {
   return apiRequest<ApiResponse<TicketDetail>>("GET", `/tickets/${id}`);
+}
+
+export async function createTicket(
+  payload: CreateTicketRequest
+): Promise<ApiResponse<TicketDetail>> {
+  return apiRequest<ApiResponse<TicketDetail>>("POST", "/tickets", payload);
+}
+
+export async function updateTicket(
+  id: string,
+  payload: UpdateTicketRequest
+): Promise<ApiResponse<TicketDetail>> {
+  return apiRequest<ApiResponse<TicketDetail>>("PATCH", `/tickets/${id}`, payload);
+}
+
+export async function updateTicketStatus(
+  id: string,
+  payload: UpdateTicketStatusRequest
+): Promise<ApiResponse<TicketDetail>> {
+  return apiRequest<ApiResponse<TicketDetail>>("PATCH", `/tickets/${id}/status`, payload);
+}
+
+export async function assignTicket(
+  id: string,
+  payload: UpdateTicketAssigneeRequest
+): Promise<ApiResponse<TicketDetail>> {
+  return apiRequest<ApiResponse<TicketDetail>>("PATCH", `/tickets/${id}/assignee`, payload);
+}
+
+export async function getTicketComments(
+  ticketId: string
+): Promise<ApiResponse<Comment[]>> {
+  return apiRequest<ApiResponse<Comment[]>>("GET", `/tickets/${ticketId}/comments`);
+}
+
+export async function addTicketComment(
+  ticketId: string,
+  body: string
+): Promise<ApiResponse<Comment>> {
+  return apiRequest<ApiResponse<Comment>>("POST", `/tickets/${ticketId}/comments`, { body });
+}
+
+export async function getTicketActivity(
+  ticketId: string
+): Promise<ApiResponse<TicketActivity[]>> {
+  return apiRequest<ApiResponse<TicketActivity[]>>("GET", `/tickets/${ticketId}/activity`);
 }

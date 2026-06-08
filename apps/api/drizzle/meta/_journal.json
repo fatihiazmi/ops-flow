@@ -8,6 +8,13 @@
       "when": 1780772325971,
       "tag": "0000_reflective_domino",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1780774965944,
+      "tag": "0001_same_shinobi_shaw",
+      "breakpoints": true
     }
   ]
 }

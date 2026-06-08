@@ -10,6 +10,29 @@ This phase establishes a reproducible local full-stack development environment u
 
 Phase 1 builds the first real vertical slice of OpsFlow. A user can run the full stack locally, log in with a seeded user, view a paginated list of tickets, filter/search by URL query parameters, and open a ticket detail page.
 
+## Phase 2: Ticket Workflow + Command Side
+
+Phase 2 turns OpsFlow from a read-only dashboard into a real workflow application. A logged-in user can create tickets, update status, assign/unassign tickets, add comments, and view an activity timeline.
+
+### Phase 2 Scope
+- Create ticket
+- Update ticket status
+- Assign/unassign ticket
+- Add/view comments
+- View activity history
+- Fetch users for assignee dropdown
+- Record activity events for important workflow actions
+
+### What's Not in Phase 2
+- Delete ticket or edit/delete comments
+- File attachments
+- Notifications
+- Real-time updates
+- Redis caching
+- Dashboard metrics
+- Advanced role-based permissions
+- PWA or mobile app
+
 ## Tech Stack
 
 - **Frontend:** Vue 3, TypeScript, Vite, Vue Router, Pinia, Tailwind CSS
@@ -102,7 +125,17 @@ opsflow/
 
 ### Tickets
 - `GET /api/tickets` - List tickets with query params: `q`, `status`, `priority`, `assigneeId`, `page`, `pageSize`, `sortBy`, `sortDirection`
+- `POST /api/tickets` - Create a new ticket (requires JWT)
 - `GET /api/tickets/:id` - Get single ticket by ID (requires JWT)
+- `PATCH /api/tickets/:id` - Update ticket fields (title, description, priority, category, dueAt) (requires JWT)
+- `PATCH /api/tickets/:id/status` - Update ticket status (requires JWT)
+- `PATCH /api/tickets/:id/assignee` - Assign or unassign ticket (requires JWT)
+- `GET /api/tickets/:id/comments` - Get comments for a ticket (requires JWT)
+- `POST /api/tickets/:id/comments` - Add a comment to a ticket (requires JWT)
+- `GET /api/tickets/:id/activity` - Get activity history for a ticket (requires JWT)
+
+### Users
+- `GET /api/users` - List users with optional `role` filter (requires JWT)
 
 ## Frontend Routes
 
@@ -175,20 +208,102 @@ curl "http://localhost:3000/tickets/<TICKET_ID>" \
 
 ## Known Limitations
 
-- Read-only ticket flow (no create/update/delete)
-- No comments or activity timeline
-- No advanced dashboard metrics
+- No delete ticket or edit/delete comments
+- No file attachments
+- No notifications or real-time updates
 - No Redis caching yet
-- No role-based permissions
+- No dashboard metrics
+- No advanced role-based permissions
 - No CI/CD pipeline
 - localStorage token storage (XSS risk)
 
 ## Next Phases
 
-- Phase 2: Ticket write operations (create, update, delete) + comments + activity timeline
 - Phase 3: Dashboard metrics, filtering, and reporting
 - Phase 4: Role-based permissions and advanced auth
 - Phase 5: Performance optimization, Redis caching, and deployment
+
+## Status Transition Rules
+
+Allowed transitions:
+- `open` → `in_progress`
+- `open` → `closed`
+- `in_progress` → `resolved`
+- `in_progress` → `closed`
+- `resolved` → `closed`
+- `resolved` → `in_progress`
+
+Not allowed:
+- `closed` → `open`
+- `closed` → `in_progress`
+- `closed` → `resolved`
+- Any same-status transition
+
+## Verification Commands
+
+```bash
+# Check API health
+curl http://localhost:3000/health
+
+# Check API readiness
+curl http://localhost:3000/ready
+
+# Login
+TOKEN=$(curl -s -X POST http://localhost:3000/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@opsflow.local","password":"password123"}' | jq -r '.data.token')
+
+# Get current user
+curl http://localhost:3000/auth/me \
+  -H "Authorization: Bearer $TOKEN"
+
+# List tickets
+curl "http://localhost:3000/tickets?page=1&pageSize=20" \
+  -H "Authorization: Bearer $TOKEN"
+
+# Create ticket
+curl -X POST http://localhost:3000/tickets \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{
+    "title": "Cannot access billing portal",
+    "description": "User receives 403 when opening billing portal.",
+    "priority": "high",
+    "category": "access",
+    "assigneeId": null,
+    "dueAt": "2026-06-10T10:00:00.000Z"
+  }'
+
+# Update status
+curl -X PATCH http://localhost:3000/tickets/<TICKET_ID>/status \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{"status":"in_progress"}'
+
+# Assign/unassign ticket
+curl -X PATCH http://localhost:3000/tickets/<TICKET_ID>/assignee \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{"assigneeId":null}'
+
+# Add comment
+curl -X POST http://localhost:3000/tickets/<TICKET_ID>/comments \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{"body":"I reproduced this issue and started investigation."}'
+
+# Get comments
+curl http://localhost:3000/tickets/<TICKET_ID>/comments \
+  -H "Authorization: Bearer $TOKEN"
+
+# Get activity
+curl http://localhost:3000/tickets/<TICKET_ID>/activity \
+  -H "Authorization: Bearer $TOKEN"
+
+# Get users
+curl http://localhost:3000/users?role=agent \
+  -H "Authorization: Bearer $TOKEN"
+```
 
 ## Database Management
 
@@ -217,3 +332,5 @@ See `docs/adr/` for detailed architecture decision records.
 - ADR 0002: Hono as the backend framework
 - ADR 0003: Use URL Query Parameters for Ticket List View State
 - ADR 0004: Separate Backend Routes, Services, Repositories, and Schemas
+- ADR 0005: Model Ticket Status as Explicit Workflow Transitions
+- ADR 0006: Use Pessimistic Mutations for Ticket Workflow Actions

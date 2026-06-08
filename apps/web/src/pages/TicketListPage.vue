@@ -1,6 +1,9 @@
 <template>
   <div>
-    <h1 class="text-2xl font-bold text-gray-900 mb-6">Tickets</h1>
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-2xl font-bold text-gray-900">Tickets</h1>
+      <CreateTicketDialog @created="fetchTickets" />
+    </div>
 
     <div class="mb-6 flex flex-wrap gap-4">
       <div>
@@ -152,6 +155,7 @@
 <script setup lang="ts">
 import { useRouter } from "vue-router";
 import { useTicketList } from "../composables/useTicketList.js";
+import CreateTicketDialog from "../components/tickets/CreateTicketDialog.vue";
 
 const router = useRouter();
 const { tickets, meta, isLoading, error, filters, fetchTickets, updateQuery } =

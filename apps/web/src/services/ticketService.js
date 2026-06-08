@@ -22,4 +22,25 @@ export async function getTickets(params) {
 export async function getTicketById(id) {
     return apiRequest("GET", `/tickets/${id}`);
 }
+export async function createTicket(payload) {
+    return apiRequest("POST", "/tickets", payload);
+}
+export async function updateTicket(id, payload) {
+    return apiRequest("PATCH", `/tickets/${id}`, payload);
+}
+export async function updateTicketStatus(id, payload) {
+    return apiRequest("PATCH", `/tickets/${id}/status`, payload);
+}
+export async function assignTicket(id, payload) {
+    return apiRequest("PATCH", `/tickets/${id}/assignee`, payload);
+}
+export async function getTicketComments(ticketId) {
+    return apiRequest("GET", `/tickets/${ticketId}/comments`);
+}
+export async function addTicketComment(ticketId, body) {
+    return apiRequest("POST", `/tickets/${ticketId}/comments`, { body });
+}
+export async function getTicketActivity(ticketId) {
+    return apiRequest("GET", `/tickets/${ticketId}/activity`);
+}
 //# sourceMappingURL=ticketService.js.map

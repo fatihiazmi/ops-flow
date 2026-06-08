@@ -1,5 +1,5 @@
 import { db } from "./drizzle.js";
-import { users, tickets } from "./schema/index.js";
+import { users, tickets, comments, ticketActivity } from "./schema/index.js";
 import bcryptjs from "bcryptjs";
 
 async function seed() {
@@ -195,7 +195,38 @@ async function seed() {
 
   await db.insert(tickets).values(ticketData);
 
-  console.log("Seeded 5 users and 50 tickets.");
+  const seededTickets = await db.select({ id: tickets.id }).from(tickets).limit(10);
+  const commentBodies = [
+    "I reproduced this issue on Chrome and Safari.",
+    "Checking the server logs now.",
+    "This seems related to the recent deployment.",
+    "Can you provide more details about the error?",
+  ];
+
+  for (const ticket of seededTickets) {
+    const actorId = userIds[0];
+    const comment = await db.insert(comments).values({
+      ticketId: ticket.id,
+      authorId: actorId,
+      body: commentBodies[Math.floor(Math.random() * commentBodies.length)],
+    }).returning();
+
+    await db.insert(ticketActivity).values({
+      ticketId: ticket.id,
+      actorId,
+      eventType: "ticket_created",
+      metadata: {},
+    });
+
+    await db.insert(ticketActivity).values({
+      ticketId: ticket.id,
+      actorId,
+      eventType: "comment_added",
+      metadata: { commentId: comment[0].id },
+    });
+  }
+
+  console.log("Seeded 5 users, 50 tickets, and some comments/activity.");
   process.exit(0);
 }
 

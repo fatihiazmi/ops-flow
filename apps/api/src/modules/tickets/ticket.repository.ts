@@ -4,9 +4,13 @@ import { db } from "../../db/drizzle.js";
 import { tickets, users } from "../../db/schema/index.js";
 import type { TicketListQuery } from "./ticket.schemas.js";
 import type { TicketListItem, TicketDetail } from "@opsflow/shared";
+import type { NodePgDatabase } from "drizzle-orm/node-postgres";
+import * as schema from "../../db/schema/index.js";
 
 const assignee = alias(users, "assignee");
 const creator = alias(users, "creator");
+
+type DBOrTx = NodePgDatabase<typeof schema> | Parameters<Parameters<typeof db.transaction>[0]>[0];
 
 function buildWhere(filters: Pick<TicketListQuery, "status" | "priority" | "assigneeId" | "q">) {
   const conditions = [];
@@ -125,4 +129,51 @@ export async function countTickets(
   const where = buildWhere(filters);
   const result = await db.select({ value: count() }).from(tickets).where(where);
   return result[0]?.value ?? 0;
+}
+
+export async function insertTicket(
+  data: typeof tickets.$inferInsert,
+  dbOrTx: DBOrTx = db
+) {
+  const result = await dbOrTx.insert(tickets).values(data).returning();
+  return result[0];
+}
+
+export async function updateTicket(
+  id: string,
+  data: Partial<typeof tickets.$inferInsert>,
+  dbOrTx: DBOrTx = db
+) {
+  const result = await dbOrTx
+    .update(tickets)
+    .set(data)
+    .where(eq(tickets.id, id))
+    .returning();
+  return result[0];
+}
+
+export async function updateTicketStatus(
+  id: string,
+  status: string,
+  dbOrTx: DBOrTx = db
+) {
+  const result = await dbOrTx
+    .update(tickets)
+    .set({ status, updatedAt: new Date() })
+    .where(eq(tickets.id, id))
+    .returning();
+  return result[0];
+}
+
+export async function updateTicketAssignee(
+  id: string,
+  assigneeId: string | null,
+  dbOrTx: DBOrTx = db
+) {
+  const result = await dbOrTx
+    .update(tickets)
+    .set({ assigneeId, updatedAt: new Date() })
+    .where(eq(tickets.id, id))
+    .returning();
+  return result[0];
 }

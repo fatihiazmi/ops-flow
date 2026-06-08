@@ -8,7 +8,7 @@ export const errorMiddleware: ErrorHandler = (err, c) => {
 
   if (err instanceof AppError) {
     c.status(err.status);
-    return c.json(errorResponse(err.code, err.message));
+    return c.json(errorResponse(err.code, err.message, err.details));
   }
 
   if (err instanceof HTTPException) {
