@@ -1,35 +1,38 @@
 <template>
   <div>
-    <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-3">Comments</h3>
-
     <div
       v-if="isLoading"
       class="text-center py-4"
     >
-      <p class="text-gray-500 dark:text-gray-400 text-sm">Loading comments...</p>
+      <p class="text-gray-400 dark:text-slate-500 text-sm">Loading comments...</p>
     </div>
 
     <div
       v-else-if="comments.length === 0"
-      class="text-center py-4"
+      class="text-center py-6"
     >
-      <p class="text-gray-500 dark:text-gray-400 text-sm">No comments yet.</p>
+      <p class="text-gray-400 dark:text-slate-500 text-sm">No comments yet. Be the first to add one.</p>
     </div>
 
     <ul
       v-else
-      class="space-y-4"
+      class="space-y-3"
     >
       <li
         v-for="comment in comments"
         :key="comment.id"
-        class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4"
+        class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-4"
       >
-        <p class="text-sm text-gray-900 dark:text-gray-100 whitespace-pre-wrap">{{ comment.body }}</p>
-        <div class="mt-2 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-          <span>{{ comment.author.name }}</span>
-          <span>{{ formatDate(comment.createdAt) }}</span>
+        <div class="flex items-center gap-2 mb-2">
+          <div class="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+            <span class="text-[10px] font-semibold text-blue-400">
+              {{ comment.author.name.charAt(0).toUpperCase() }}
+            </span>
+          </div>
+          <span class="text-sm font-medium text-gray-900 dark:text-slate-200">{{ comment.author.name }}</span>
+          <span class="text-xs text-gray-400 dark:text-slate-500 ml-auto">{{ formatDate(comment.createdAt) }}</span>
         </div>
+        <p class="text-sm text-gray-600 dark:text-slate-300 whitespace-pre-wrap">{{ comment.body }}</p>
       </li>
     </ul>
   </div>

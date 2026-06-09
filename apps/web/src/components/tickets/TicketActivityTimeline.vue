@@ -1,36 +1,44 @@
 <template>
   <div>
-    <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-3">Activity</h3>
-
     <div
       v-if="isLoading"
       class="text-center py-4"
     >
-      <p class="text-gray-500 dark:text-gray-400 text-sm">Loading activity...</p>
+      <p class="text-gray-400 dark:text-slate-500 text-sm">Loading activity...</p>
     </div>
 
     <div
       v-else-if="activity.length === 0"
-      class="text-center py-4"
+      class="text-center py-6"
     >
-      <p class="text-gray-500 dark:text-gray-400 text-sm">No activity yet.</p>
+      <p class="text-gray-400 dark:text-slate-500 text-sm">No activity recorded yet.</p>
     </div>
 
     <ul
       v-else
-      class="space-y-3"
+      class="space-y-0"
     >
       <li
-        v-for="event in activity"
+        v-for="(event, idx) in activity"
         :key="event.id"
-        class="flex items-start space-x-3"
+        class="relative flex gap-3 pb-4"
+        :class="{ 'pb-0': idx === activity.length - 1 }"
       >
-        <div class="flex-1">
-          <p class="text-sm text-gray-900 dark:text-gray-100">
-            <span class="font-medium">{{ event.actor.name }}</span>
+        <!-- Timeline line -->
+        <div
+          v-if="idx < activity.length - 1"
+          class="absolute left-[11px] top-7 bottom-0 w-px bg-slate-200 dark:bg-slate-800"
+          aria-hidden="true"
+        ></div>
+        <!-- Dot -->
+        <div class="relative mt-1.5 w-2 h-2 rounded-full flex-shrink-0 bg-slate-400 dark:bg-slate-600"></div>
+        <!-- Content -->
+        <div class="flex-1 min-w-0">
+          <p class="text-sm text-gray-700 dark:text-slate-300">
+            <span class="font-medium text-gray-900 dark:text-slate-200">{{ event.actor.name }}</span>
             {{ formatEvent(event) }}
           </p>
-          <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ formatDate(event.createdAt) }}</p>
+          <p class="text-[11px] text-gray-400 dark:text-slate-500 mt-0.5">{{ formatDate(event.createdAt) }}</p>
         </div>
       </li>
     </ul>

@@ -1,158 +1,225 @@
 <template>
-  <div>
-    <button
-      @click="router.back()"
-      class="mb-4 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
-    >
-      ← Back to tickets
-    </button>
+  <div class="flex h-full min-h-0">
+    <!-- ============================================================
+         Center: ticket detail with tabs
+         ============================================================ -->
+    <div class="flex-1 min-w-0 flex flex-col overflow-hidden">
+      <!-- Loading skeleton -->
+      <template v-if="isLoading">
+        <div class="p-6 space-y-4 animate-pulse">
+          <div class="h-4 w-24 bg-slate-200 dark:bg-slate-800 rounded"></div>
+          <div class="h-7 w-3/4 bg-slate-200 dark:bg-slate-800 rounded"></div>
+          <div class="h-20 bg-slate-200 dark:bg-slate-800 rounded"></div>
+        </div>
+      </template>
 
-    <div
-      v-if="isLoading"
-      class="space-y-6 animate-pulse"
-    >
-      <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-        <div class="h-7 bg-gray-200 dark:bg-gray-700 rounded w-1/2 mb-4" />
-        <div class="grid grid-cols-2 gap-4 mb-6">
-          <div v-for="i in 4" :key="i">
-            <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-16 mb-2" />
-            <div class="h-5 bg-gray-200 dark:bg-gray-700 rounded w-24" />
+      <!-- Error -->
+      <div v-else-if="error" class="flex-1 flex items-center justify-center p-6">
+        <div class="text-center">
+          <p class="text-sm text-red-500 mb-2">{{ error }}</p>
+          <button @click="fetchTicket" class="text-xs text-blue-500 hover:text-blue-400">Retry</button>
+        </div>
+      </div>
+
+      <!-- Not found -->
+      <div v-else-if="!ticket" class="flex-1 flex items-center justify-center p-6">
+        <p class="text-sm text-gray-400 dark:text-slate-500">Ticket not found.</p>
+      </div>
+
+      <!-- Ticket loaded -->
+      <template v-else>
+        <!-- Header: breadcrumb + key/category + title + meta badges + description -->
+        <div class="flex-shrink-0 px-6 pt-6 pb-5">
+          <!-- Breadcrumb -->
+          <div class="flex items-center gap-2 text-xs text-gray-400 dark:text-slate-500 mb-3">
+            <router-link to="/tickets" class="hover:text-gray-600 dark:hover:text-slate-300 transition-colors">
+              Tickets
+            </router-link>
+            <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span class="font-mono tracking-tight">T-{{ ticket.id.slice(0, 6) }}</span>
+            <span
+              v-if="ticket.category"
+              class="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider bg-slate-200 dark:bg-slate-800 text-gray-500 dark:text-slate-400"
+            >
+              {{ ticket.category.replace(/_/g, " ") }}
+            </span>
           </div>
-        </div>
-        <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-20 mb-2" />
-        <div class="h-20 bg-gray-200 dark:bg-gray-700 rounded" />
-      </div>
-      <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-        <div class="h-5 bg-gray-200 dark:bg-gray-700 rounded w-32 mb-4" />
-        <div class="h-24 bg-gray-200 dark:bg-gray-700 rounded" />
-      </div>
-      <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-        <div class="h-5 bg-gray-200 dark:bg-gray-700 rounded w-24 mb-4" />
-        <div class="space-y-3">
-          <div v-for="i in 2" :key="i" class="h-16 bg-gray-200 dark:bg-gray-700 rounded" />
-        </div>
-      </div>
-      <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-        <div class="h-5 bg-gray-200 dark:bg-gray-700 rounded w-32 mb-4" />
-        <div class="space-y-3">
-          <div v-for="i in 3" :key="i" class="h-12 bg-gray-200 dark:bg-gray-700 rounded" />
-        </div>
-      </div>
-    </div>
 
-    <div
-      v-else-if="error"
-      class="p-4 bg-red-50 dark:bg-red-900/30 rounded-lg text-red-700 dark:text-red-400"
-    >
-      <p>{{ error }}</p>
-    </div>
+          <!-- Title -->
+          <h1 class="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-3 leading-snug">
+            {{ ticket.title }}
+          </h1>
 
-    <div
-      v-else-if="ticket"
-      class="space-y-6"
-    >
-      <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">{{ ticket.title }}</h1>
+          <!-- Meta badges row -->
+          <div class="flex flex-wrap items-center gap-2 mb-2">
+            <span
+              class="inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-semibold capitalize"
+              :class="headerPriorityClass"
+            >
+              {{ ticket.priority }}
+            </span>
+            <span class="inline-flex items-center gap-1 text-[11px] text-gray-500 dark:text-slate-400">
+              <span class="w-1.5 h-1.5 rounded-full flex-shrink-0" :class="headerStatusDot"></span>
+              {{ headerStatusLabel }}
+            </span>
+            <span v-if="ticket.assignee" class="inline-flex items-center gap-1 text-[11px] text-gray-500 dark:text-slate-400">
+              <svg class="w-3 h-3 flex-shrink-0" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2"/>
+                <path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              {{ ticket.assignee.name }}
+            </span>
+            <span v-else class="text-[11px] text-gray-400 dark:text-slate-600">Unassigned</span>
+          </div>
 
-        <div class="grid grid-cols-2 gap-4 mb-6">
-          <div>
-            <span class="text-sm text-gray-500 dark:text-gray-400">Status</span>
-            <TicketStatusControl
+          <!-- Creator + date -->
+          <p class="text-[11px] text-gray-400 dark:text-slate-500">
+            Created by <span class="text-gray-500 dark:text-slate-400">{{ ticket.createdBy.name }}</span>
+            &middot;
+            {{ headerCreatedAt }}
+          </p>
+
+          <!-- Description -->
+          <p v-if="ticket.description" class="mt-4 pt-4 text-sm text-gray-600 dark:text-slate-400 leading-relaxed whitespace-pre-wrap border-t border-slate-100 dark:border-slate-800">
+            {{ ticket.description }}
+          </p>
+        </div>
+
+        <!-- Tabs -->
+        <div class="flex-shrink-0 flex border-b border-slate-200 dark:border-slate-800 px-6" role="tablist" aria-label="Ticket tabs">
+          <button
+            v-for="tab in tabs"
+            :key="tab.key"
+            @click="activeTab = tab.key"
+            role="tab"
+            :aria-selected="activeTab === tab.key"
+            class="relative px-4 py-2.5 text-sm font-medium transition-colors -mb-px"
+            :class="activeTab === tab.key
+              ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-500'
+              : 'text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-300 border-b-2 border-transparent'"
+          >
+            {{ tab.label }}
+            <span
+              v-if="tab.count != null"
+              class="ml-1.5 text-xs opacity-60 tabular-nums"
+            >
+              {{ tab.count }}
+            </span>
+          </button>
+        </div>
+
+        <!-- Tab content -->
+        <div class="flex-1 overflow-y-auto">
+          <!-- Comments tab -->
+          <div v-if="activeTab === 'comments'" class="p-6 space-y-6">
+            <TicketComments
+              ref="commentsRef"
               :ticket-id="ticket.id"
-              :current-status="ticket.status"
-              @updated="handleWorkflowUpdate"
             />
+            <TicketCommentForm :ticket-id="ticket.id" @submitted="onCommentAdded" />
           </div>
-          <div>
-            <span class="text-sm text-gray-500 dark:text-gray-400">Priority</span>
-            <p class="font-medium dark:text-gray-200">{{ ticket.priority }}</p>
-          </div>
-          <div>
-            <span class="text-sm text-gray-500 dark:text-gray-400">Category</span>
-            <p class="font-medium dark:text-gray-200">{{ ticket.category }}</p>
-          </div>
-          <div>
-            <span class="text-sm text-gray-500 dark:text-gray-400">Due Date</span>
-            <p class="font-medium dark:text-gray-200">
-              {{ ticket.dueAt ? new Date(ticket.dueAt).toLocaleDateString() : "No due date" }}
-            </p>
+
+          <!-- Activity tab -->
+          <div v-else-if="activeTab === 'activity'" class="p-6">
+            <TicketActivityTimeline ref="activityRef" :ticket-id="ticket.id" />
           </div>
         </div>
-
-        <div class="mb-6">
-          <span class="text-sm text-gray-500 dark:text-gray-400">Description</span>
-          <p class="mt-1 text-gray-900 dark:text-gray-200">{{ ticket.description }}</p>
-        </div>
-
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <span class="text-sm text-gray-500 dark:text-gray-400">Created By</span>
-            <p class="font-medium dark:text-gray-200">{{ ticket.createdBy.name }}</p>
-          </div>
-          <div>
-            <span class="text-sm text-gray-500 dark:text-gray-400">Assignee</span>
-            <TicketAssigneeControl
-              :ticket-id="ticket.id"
-              :current-assignee="ticket.assignee"
-              @updated="handleWorkflowUpdate"
-            />
-          </div>
-        </div>
-      </div>
-
-      <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-        <TicketCommentForm
-          :ticket-id="ticket.id"
-          @submitted="handleWorkflowUpdate"
-        />
-      </div>
-
-      <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-        <TicketComments
-          ref="commentsRef"
-          :ticket-id="ticket.id"
-        />
-      </div>
-
-      <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-        <TicketActivityTimeline
-          ref="activityRef"
-          :ticket-id="ticket.id"
-        />
-      </div>
+      </template>
     </div>
 
-    <div
-      v-else
-      class="text-center py-12"
-    >
-      <p class="text-gray-500 dark:text-gray-400">Ticket not found.</p>
+    <!-- ============================================================
+         Right: Context panel (visible on xl+)
+         ============================================================ -->
+    <div class="hidden xl:block w-72 flex-shrink-0">
+      <TicketContextPanel
+        v-if="ticket"
+        :ticket="ticket"
+        @updated="fetchTicket"
+      />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import { ref, onMounted, computed, nextTick, watch } from "vue";
+import { useRoute } from "vue-router";
 import { getTicketById } from "../services/ticketService.js";
 import type { TicketDetail } from "@opsflow/shared";
-import TicketStatusControl from "../components/tickets/TicketStatusControl.vue";
-import TicketAssigneeControl from "../components/tickets/TicketAssigneeControl.vue";
 import TicketCommentForm from "../components/tickets/TicketCommentForm.vue";
 import TicketComments from "../components/tickets/TicketComments.vue";
 import TicketActivityTimeline from "../components/tickets/TicketActivityTimeline.vue";
+import TicketContextPanel from "../components/tickets/TicketContextPanel.vue";
+
+defineProps<{
+  selectedTicketId?: string;
+}>();
 
 const route = useRoute();
-const router = useRouter();
+
+// ── State ──────────────────────────────────────────────────────────
 const ticket = ref<TicketDetail | null>(null);
-const isLoading = ref(true);
+const isLoading = ref(false);
 const error = ref<string | null>(null);
+const activeTab = ref<"comments" | "activity">("comments");
+
+// ── Tab definitions ────────────────────────────────────────────────
+const tabs = computed(() => [
+  { key: "comments" as const, label: "Comments", count: null },
+  { key: "activity" as const, label: "Activity", count: null },
+]);
+
+// ── Header computed properties ─────────────────────────────────────
+const headerPriorityClass = computed(() => {
+  switch (ticket.value?.priority) {
+    case "critical": return "bg-red-500/10 text-red-400";
+    case "high": return "bg-orange-500/10 text-orange-400";
+    case "medium": return "bg-blue-500/10 text-blue-400";
+    case "low": return "bg-gray-500/10 text-gray-400";
+    default: return "bg-gray-500/10 text-gray-400";
+  }
+});
+
+const headerStatusDot = computed(() => {
+  switch (ticket.value?.status) {
+    case "open": return "bg-blue-500";
+    case "in_progress": return "bg-amber-500";
+    case "resolved": return "bg-emerald-500";
+    case "closed": return "bg-slate-500";
+    default: return "bg-slate-500";
+  }
+});
+
+const headerStatusLabel = computed(() => {
+  switch (ticket.value?.status) {
+    case "open": return "Open";
+    case "in_progress": return "In Progress";
+    case "resolved": return "Resolved";
+    case "closed": return "Closed";
+    default: return ticket.value?.status ?? "";
+  }
+});
+
+const headerCreatedAt = computed(() => {
+  if (!ticket.value?.createdAt) return "";
+  return new Date(ticket.value.createdAt).toLocaleDateString("en-US", {
+    month: "short", day: "numeric", year: "numeric",
+  });
+});
+
+// ── Child component refs (for re-fetch on workflow change) ────────
 const commentsRef = ref<InstanceType<typeof TicketComments> | null>(null);
 const activityRef = ref<InstanceType<typeof TicketActivityTimeline> | null>(null);
 
+// ── Fetch ──────────────────────────────────────────────────────────
 async function fetchTicket() {
+  const id = route.params.id as string;
+  if (!id) return;
+  isLoading.value = true;
+  error.value = null;
   try {
-    const response = await getTicketById(route.params.id as string);
+    const response = await getTicketById(id);
     ticket.value = response.data;
   } catch (e) {
     error.value = e instanceof Error ? e.message : "Failed to load ticket";
@@ -161,11 +228,21 @@ async function fetchTicket() {
   }
 }
 
-async function handleWorkflowUpdate() {
+// ── Workflow events ────────────────────────────────────────────────
+async function onCommentAdded() {
   await fetchTicket();
+  await nextTick();
   commentsRef.value?.fetchComments();
   activityRef.value?.fetchActivity();
 }
 
+// ── Lifecycle ──────────────────────────────────────────────────────
 onMounted(fetchTicket);
+
+// Re-fetch when route param changes (navigating between tickets via queue)
+watch(() => route.params.id, (newId, oldId) => {
+  if (newId && newId !== oldId) {
+    fetchTicket();
+  }
+});
 </script>

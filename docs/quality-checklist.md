@@ -43,7 +43,7 @@
 
 ## Accessibility
 
-- [x] Login page: semantic form, labeled inputs, visible error
+- [x] Login page: semantic `<main>` + `<h1>`, labeled inputs with icons, visible error, loading spinner, demo account quick-fill buttons, decorative background is `aria-hidden`, form submits on Enter, client-side validation for email format and required fields
 - [x] Dashboard: h1 heading, metric cards with sr-only labels
 - [x] Ticket list: h1 heading, table structure, search with label
 - [x] Ticket detail: semantic sections, status dropdown with labels

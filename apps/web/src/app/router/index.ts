@@ -20,13 +20,20 @@ const routes = [
       },
       {
         path: "tickets",
-        component: () => import("../../pages/TicketListPage.vue"),
+        component: () => import("../../pages/TicketWorkspacePage.vue"),
         meta: { title: "Tickets" },
-      },
-      {
-        path: "tickets/:id",
-        component: () => import("../../pages/TicketDetailPage.vue"),
-        meta: { title: "Ticket Detail" },
+        children: [
+          {
+            path: "",
+            component: () => import("../../pages/TicketQueuePage.vue"),
+            meta: { title: "Tickets" },
+          },
+          {
+            path: ":id",
+            component: () => import("../../pages/TicketDetailPage.vue"),
+            meta: { title: "Ticket Detail" },
+          },
+        ],
       },
       {
         path: "settings",

@@ -1,31 +1,44 @@
 <template>
-  <div>
-    <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-3">Add Comment</h3>
+  <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-4">
     <form @submit.prevent="handleSubmit">
-      <div>
-        <label
-          for="comment-body"
-          class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-        >Comment</label>
-        <textarea
-          id="comment-body"
-          v-model="body"
-          rows="3"
-          class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-          :class="{ 'border-red-500': error }"
-        />
-        <p
-          v-if="error"
-          class="mt-1 text-sm text-red-600"
-        >{{ error }}</p>
-      </div>
-      <div class="mt-3 flex justify-end">
+      <label for="comment-body" class="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-2">
+        Add a comment
+      </label>
+      <textarea
+        id="comment-body"
+        v-model="body"
+        rows="3"
+        placeholder="Write an update or investigation note..."
+        class="w-full rounded-lg px-3 py-2.5 text-sm
+               bg-slate-50 dark:bg-slate-800/50
+               border border-slate-200 dark:border-slate-700
+               text-gray-900 dark:text-slate-100
+               placeholder-gray-400 dark:placeholder-slate-500
+               focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500
+               transition-colors resize-y"
+        :aria-invalid="error ? 'true' : undefined"
+      />
+      <p v-if="error" class="mt-1 text-xs text-red-400" role="alert">{{ error }}</p>
+      <div class="mt-3 flex items-center justify-between">
+        <span class="text-[11px] text-gray-400 dark:text-slate-500 tabular-nums">
+          {{ body.length }}/2000
+        </span>
         <button
           type="submit"
           :disabled="isSubmitting || !body.trim()"
-          class="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg
+                 focus:outline-none focus:ring-2 focus:ring-blue-500/50
+                 disabled:opacity-40 disabled:cursor-not-allowed
+                 transition-colors"
         >
-          {{ isSubmitting ? "Submitting..." : "Submit Comment" }}
+          <span v-if="isSubmitting" class="flex items-center gap-1.5">
+            <svg class="animate-spin w-3.5 h-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+            </svg>
+            Adding...
+          </span>
+          <span v-else>Add Comment</span>
         </button>
       </div>
     </form>
@@ -66,13 +79,13 @@ async function handleSubmit() {
   isSubmitting.value = true;
 
   try {
-    await addTicketComment(props.ticketId, body.value);
+    await addTicketComment(props.ticketId, body.value.trim());
     notificationStore.addNotification("success", "Comment added successfully");
     body.value = "";
     emit("submitted");
   } catch (e) {
     const message = e instanceof Error ? e.message : "Failed to add comment";
-    notificationStore.addNotification("error", message);
+    error.value = message;
   } finally {
     isSubmitting.value = false;
   }

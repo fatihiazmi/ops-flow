@@ -1,6 +1,6 @@
 <template>
-  <div>
-    <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Settings</h1>
+  <div class="h-full overflow-y-auto p-6">
+    <h1 class="text-2xl font-bold text-gray-900 dark:text-slate-100 mb-6">Settings</h1>
 
     <section class="mt-6 bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-6">
       <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Appearance</h2>

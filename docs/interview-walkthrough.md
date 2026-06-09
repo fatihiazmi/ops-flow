@@ -32,11 +32,25 @@ Shared types live in `packages/shared` — DTOs, enums, API shapes — imported 
 
 Navigate to `http://localhost:5173`, auto-redirected to `/login`.
 
+The login page is a dark SaaS control-center design with glassmorphism card, circuit-line decorative background, and embedded SVG icons. It communicates "secure operations dashboard" visually.
+
 **Credentials:** `admin@opsflow.local` / `password123`
+
+For quick demo access, click any of the **Demo accounts** buttons (Admin / Agent / Viewer) below the card — they auto-fill the form fields with the seeded credentials. Then click "Sign in."
 
 JWT gets stored in `localStorage` under `opsflow_token`. The Pinia auth store hydrates on app init by calling `GET /auth/me` with the stored token. If that fails, we redirect to login.
 
 ### 4. Dashboard
+
+The shell now uses a professional operations-cockpit layout:
+
+| Area       | Purpose |
+| ---------- | ------- |
+| **Sidebar** (240px) | Product navigation (Workspace: Dashboard, Tickets; Operations: Settings; Saved Views: Critical), user info + logout |
+| **Topbar** | Global search (placeholder), "Create" button, SLA alerts icon |
+| **Main content** | Page-specific content, scrollable |
+
+The global "Create Ticket" button is always accessible in the topbar — it auto-opens the creation dialog regardless of which page you're on. Created tickets navigate directly to their detail view.
 
 Six metric cards at the top: Total Open, In Progress, Resolved Today, Critical, Overdue, Unassigned. Below: status distribution bar chart, priority distribution, SLA risk table (tickets due within 24h or already overdue), and recent activity feed.
 
@@ -53,9 +67,19 @@ All of this comes from a single `GET /dashboard/metrics` call — one aggregated
 
 ### 6. Tickets List
 
-Navigate to `/tickets`. Paginated list with URL-driven filters: status, priority, search with 300ms debounce. Every filter is a query param — refresh the page and the filters survive. Copy the URL, open incognito, paste — same view.
+Navigate to `/tickets` — the ticket workspace opens with a **card-based queue** on the left and a "Select a ticket" placeholder on the right. This is a master-detail layout common in operations/helpdesk tools:
 
-The `useTicketList` composable watches `route.query` and auto-fetches whenever any filter changes, keeping data flow deterministic.
+| Column | Width | Content |
+| ------ | ----- | ------- |
+| Queue | 320px | Search bar, status/priority filter pills, paginated ticket cards |
+| Detail | flex-1 | Ticket header, description, Comments/Activity tabs |
+| Context | 288px (xl+) | Status control, assignee control, metadata, reporter info |
+
+Each ticket card shows: key (T-xxxxxx), priority badge with colored accent strip, title, status dot + label, assignee, due date, and category. Priority determines the left accent strip color (red=critical, orange=high, blue=medium, gray=low). The selected card is highlighted with a blue border glow.
+
+Clicking a ticket card navigates to `/tickets/:id` — the queue persists on the left while the detail opens in the center. The URL is shareable and refreshable.
+
+Filters are still URL-driven: search updates `?q=`, status/priority pills update the query params with `page=1` reset. All existing filter/pagination behavior is preserved.
 
 ### 7. URL-Driven Filters
 
@@ -65,7 +89,22 @@ This is a deliberate design choice: URL as state means shareable, bookmarkable, 
 
 ### 8. Ticket Detail
 
-Click a ticket → `/tickets/<id>`. Full detail view with title, description, status, priority, category, assignee, due date, and timestamps. Comments section below, activity timeline on the right.
+Click a ticket card → `/tickets/:id`. The center area shows:
+- Breadcrumb: Tickets → T-xxxxxx
+- Title and full description
+- **Comments tab**: comment form + chronological comment list
+- **Activity tab**: audit trail of all status/assignee/priority changes
+
+The right context panel (visible on xl+ screens) shows:
+- Status dropdown with valid transitions
+- Priority badge
+- Category
+- Due date
+- Created/updated timestamps
+- Assignee dropdown with agent list
+- Reporter avatar + name
+
+Status changes and assignments happen directly from the context panel, keeping the center area focused on reading the ticket.
 
 ### 9. Status Transition (Workflow Engine)
 
@@ -109,9 +148,10 @@ Click logout → token cleared from localStorage → redirected to `/login` → 
 
 ### 16. Last-Minute Highlights
 
-- **Accessibility**: Semantic HTML (`<nav>`, `<main>`, `<button>`), proper label associations, keyboard-navigable forms and dropdowns
+- **Information Architecture**: Sidebar for product nav, topbar for global actions (Create, search), main area for page content — clearly separated concerns. Sidebar uses `<nav aria-label>`, topbar uses `<header>`, content uses `<main>`.
+- **Accessibility**: Semantic HTML landmarks, ticket cards are real `<router-link>` elements, visible focus rings, `aria-current="page"` on selected cards, labeled form controls, status/priority badges include text labels
 - **Security**: JWT verification via jose with clock tolerance, per-endpoint auth middleware, rate limiting on login (5 attempts/60s per IP, `x-forwarded-for` aware), backend actor derivation from JWT claims (no client-provided `userId`), CORS restricted to configured origin
-- **Testing**: 58 backend tests (vitest) + 19 frontend tests (vitest) + 9 E2E tests (Playwright) — risk-based: auth, validation, workflows, dashboard metrics, critical user journeys
+- **Testing**: 58 backend tests (vitest) + 35 frontend tests (vitest) + 9 E2E tests (Playwright) — risk-based: auth, validation, workflows, dashboard metrics, critical user journeys
 
 ---
 

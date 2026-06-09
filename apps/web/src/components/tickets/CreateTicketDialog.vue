@@ -171,19 +171,29 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, watch } from "vue";
 import { createTicket } from "../../services/ticketService.js";
 import { getUsers } from "../../services/userService.js";
 import { useNotificationStore } from "../../app/stores/notification.store.js";
 import type { PublicUser } from "@opsflow/shared";
 
+const props = defineProps<{
+  initialOpen?: boolean;
+}>();
+
 const emit = defineEmits<{
-  (e: "created"): void;
+  (e: "created", ticket: { id: string }): void;
+  (e: "close"): void;
 }>();
 
 const notificationStore = useNotificationStore();
 
-const isOpen = ref(false);
+const isOpen = ref(props.initialOpen ?? false);
+
+// When parent toggles initialOpen from false to true, auto-open
+watch(() => props.initialOpen, (val) => {
+  if (val) isOpen.value = true;
+});
 const isSubmitting = ref(false);
 const users = ref<PublicUser[]>([]);
 
@@ -214,6 +224,7 @@ function openDialog() {
 
 function closeDialog() {
   isOpen.value = false;
+  emit("close");
 }
 
 function validate(): boolean {
@@ -248,7 +259,7 @@ async function handleSubmit() {
 
   isSubmitting.value = true;
   try {
-    await createTicket({
+    const result = await createTicket({
       title: form.value.title,
       description: form.value.description,
       priority: form.value.priority as "low" | "medium" | "high" | "critical",
@@ -259,7 +270,7 @@ async function handleSubmit() {
 
     notificationStore.addNotification("success", "Ticket created successfully");
     closeDialog();
-    emit("created");
+    emit("created", { id: result.data.id });
 
     // Reset form
     form.value = {

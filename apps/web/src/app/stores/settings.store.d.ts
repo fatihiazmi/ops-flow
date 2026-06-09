@@ -1,0 +1,54 @@
+export type Theme = "system" | "light" | "dark";
+export type TicketTableDensity = "comfortable" | "compact";
+export type DefaultTicketPageSize = 10 | 20 | 50;
+export declare function applyInitialTheme(): void;
+export declare const useSettingsStore: import("pinia").StoreDefinition<"settings", Pick<{
+    theme: import("vue").Ref<Theme, Theme>;
+    ticketTableDensity: import("vue").Ref<TicketTableDensity, TicketTableDensity>;
+    defaultTicketPageSize: import("vue").Ref<DefaultTicketPageSize, DefaultTicketPageSize>;
+    showSuccessToasts: import("vue").Ref<boolean, boolean>;
+    showDashboardCacheBadge: import("vue").Ref<boolean, boolean>;
+    showSlaWarningBanners: import("vue").Ref<boolean, boolean>;
+    hydrateFromStorage: () => void;
+    persist: () => void;
+    resetToDefaults: () => void;
+    setTheme: (newTheme: Theme) => void;
+    setTicketTableDensity: (density: TicketTableDensity) => void;
+    setDefaultTicketPageSize: (pageSize: DefaultTicketPageSize) => void;
+    setShowSuccessToasts: (enabled: boolean) => void;
+    setShowDashboardCacheBadge: (enabled: boolean) => void;
+    setShowSlaWarningBanners: (enabled: boolean) => void;
+}, "theme" | "ticketTableDensity" | "defaultTicketPageSize" | "showSuccessToasts" | "showDashboardCacheBadge" | "showSlaWarningBanners">, Pick<{
+    theme: import("vue").Ref<Theme, Theme>;
+    ticketTableDensity: import("vue").Ref<TicketTableDensity, TicketTableDensity>;
+    defaultTicketPageSize: import("vue").Ref<DefaultTicketPageSize, DefaultTicketPageSize>;
+    showSuccessToasts: import("vue").Ref<boolean, boolean>;
+    showDashboardCacheBadge: import("vue").Ref<boolean, boolean>;
+    showSlaWarningBanners: import("vue").Ref<boolean, boolean>;
+    hydrateFromStorage: () => void;
+    persist: () => void;
+    resetToDefaults: () => void;
+    setTheme: (newTheme: Theme) => void;
+    setTicketTableDensity: (density: TicketTableDensity) => void;
+    setDefaultTicketPageSize: (pageSize: DefaultTicketPageSize) => void;
+    setShowSuccessToasts: (enabled: boolean) => void;
+    setShowDashboardCacheBadge: (enabled: boolean) => void;
+    setShowSlaWarningBanners: (enabled: boolean) => void;
+}, never>, Pick<{
+    theme: import("vue").Ref<Theme, Theme>;
+    ticketTableDensity: import("vue").Ref<TicketTableDensity, TicketTableDensity>;
+    defaultTicketPageSize: import("vue").Ref<DefaultTicketPageSize, DefaultTicketPageSize>;
+    showSuccessToasts: import("vue").Ref<boolean, boolean>;
+    showDashboardCacheBadge: import("vue").Ref<boolean, boolean>;
+    showSlaWarningBanners: import("vue").Ref<boolean, boolean>;
+    hydrateFromStorage: () => void;
+    persist: () => void;
+    resetToDefaults: () => void;
+    setTheme: (newTheme: Theme) => void;
+    setTicketTableDensity: (density: TicketTableDensity) => void;
+    setDefaultTicketPageSize: (pageSize: DefaultTicketPageSize) => void;
+    setShowSuccessToasts: (enabled: boolean) => void;
+    setShowDashboardCacheBadge: (enabled: boolean) => void;
+    setShowSlaWarningBanners: (enabled: boolean) => void;
+}, "hydrateFromStorage" | "persist" | "resetToDefaults" | "setTheme" | "setTicketTableDensity" | "setDefaultTicketPageSize" | "setShowSuccessToasts" | "setShowDashboardCacheBadge" | "setShowSlaWarningBanners">>;
+//# sourceMappingURL=settings.store.d.ts.map

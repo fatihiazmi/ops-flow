@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="h-full overflow-y-auto p-6">
     <div class="flex justify-between items-center mb-6">
       <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Dashboard</h1>
       <button
