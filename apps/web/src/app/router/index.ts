@@ -12,28 +12,38 @@ const routes = [
     component: () => import("../../components/layout/AppLayout.vue"),
     meta: { requiresAuth: true },
     children: [
-      { path: "", redirect: "/tickets" },
+      { path: "", redirect: "/projects/OPS/issues" },
       {
         path: "dashboard",
         component: () => import("../../pages/DashboardPage.vue"),
         meta: { title: "Dashboard" },
       },
+      // ── Project-scoped routes ──────────────────────────────
       {
-        path: "tickets",
+        path: "projects/:projectKey/issues",
         component: () => import("../../pages/TicketWorkspacePage.vue"),
-        meta: { title: "Tickets" },
+        meta: { title: "Issues" },
         children: [
           {
             path: "",
             component: () => import("../../pages/TicketQueuePage.vue"),
-            meta: { title: "Tickets" },
+            meta: { title: "Issues" },
           },
           {
-            path: ":id",
+            path: ":issueKey",
             component: () => import("../../pages/TicketDetailPage.vue"),
-            meta: { title: "Ticket Detail" },
+            meta: { title: "Issue Detail" },
           },
         ],
+      },
+      // ── Legacy routes (redirect) ────────────────────────────
+      {
+        path: "tickets",
+        redirect: "/projects/OPS/issues",
+      },
+      {
+        path: "tickets/:id",
+        redirect: "/projects/OPS/issues/:id",
       },
       {
         path: "settings",

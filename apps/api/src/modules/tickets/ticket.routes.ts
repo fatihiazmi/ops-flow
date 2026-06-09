@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import {
   listTickets,
   getTicketById,
+  getTicketByIssueKey,
   createTicket,
   patchTicket,
   changeTicketStatus,
@@ -20,6 +21,8 @@ const ticketRoutes = new Hono();
 
 ticketRoutes.use(authMiddleware);
 
+// ── Legacy ticket routes (for backward compatibility) ──────────────
+
 ticketRoutes.get("/", async (c) => {
   const query = c.req.query();
   const result = await listTickets(query);
@@ -29,7 +32,8 @@ ticketRoutes.get("/", async (c) => {
 ticketRoutes.post("/", async (c) => {
   const body = await c.req.json();
   const user = c.get("user");
-  const result = await createTicket(body, user);
+  const projectKey = (c.req.query("projectKey") as string) || undefined;
+  const result = await createTicket(body, user, projectKey);
   return c.json(result, 201);
 });
 
@@ -101,6 +105,19 @@ ticketRoutes.get("/:id/activity", async (c) => {
     return c.json(errorResponse("VALIDATION_ERROR", "Invalid ticket ID format"), 400);
   }
   const result = await getTicketActivity(id);
+  return c.json(result);
+});
+
+// ── Issue key resolver (e.g., GET /tickets/key/OPS-101) ──────────
+
+ticketRoutes.get("/key/:issueKey", async (c) => {
+  const issueKey = c.req.param("issueKey")!;
+  const match = issueKey.match(/^(\D+)-(\d+)/);
+  if (!match) {
+    return c.json(errorResponse("VALIDATION_ERROR", "Invalid issue key format. Expected: PROJ-123"), 400);
+  }
+  const [, projectKey, number] = match;
+  const result = await getTicketByIssueKey(projectKey, number);
   return c.json(result);
 });
 

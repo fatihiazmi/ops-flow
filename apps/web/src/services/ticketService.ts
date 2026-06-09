@@ -10,6 +10,7 @@ import type {
   UpdateTicketAssigneeRequest,
   Comment,
   TicketActivity,
+  Epic,
 } from "@opsflow/shared";
 
 export interface TicketListParams {
@@ -19,27 +20,66 @@ export interface TicketListParams {
   sortDirection?: string;
   status?: string;
   priority?: string;
+  issueType?: string;
+  epicId?: string;
+  noEpic?: boolean;
   assigneeId?: string;
   q?: string;
 }
 
+function buildSearchParams(params: TicketListParams): string {
+  const sp = new URLSearchParams();
+  const p = params as Record<string, unknown>;
+  for (const [key, value] of Object.entries(p)) {
+    if (value !== undefined && value !== null && value !== "") {
+      sp.set(key, String(value));
+    }
+  }
+  const s = sp.toString();
+  return s ? `?${s}` : "";
+}
+
+// ── Project-scoped issue endpoints ────────────────────────────────
+
+export async function getProjectIssues(
+  projectKey: string,
+  params: TicketListParams
+): Promise<ApiListResponse<TicketListItem>> {
+  return apiRequest<ApiListResponse<TicketListItem>>(
+    "GET",
+    `/projects/${projectKey}/issues${buildSearchParams(params)}`
+  );
+}
+
+export async function getProjectIssue(
+  projectKey: string,
+  issueKey: string
+): Promise<ApiResponse<TicketDetail>> {
+  return apiRequest<ApiResponse<TicketDetail>>(
+    "GET",
+    `/projects/${projectKey}/issues/${issueKey}`
+  );
+}
+
+export async function createProjectIssue(
+  projectKey: string,
+  payload: CreateTicketRequest
+): Promise<ApiResponse<TicketDetail>> {
+  return apiRequest<ApiResponse<TicketDetail>>(
+    "POST",
+    `/projects/${projectKey}/issues`,
+    payload
+  );
+}
+
+// ── Legacy ticket endpoints (for backward compatibility) ──────────
+
 export async function getTickets(
   params: TicketListParams
 ): Promise<ApiListResponse<TicketListItem>> {
-  const searchParams = new URLSearchParams();
-  if (params.page) searchParams.set("page", String(params.page));
-  if (params.pageSize) searchParams.set("pageSize", String(params.pageSize));
-  if (params.sortBy) searchParams.set("sortBy", params.sortBy);
-  if (params.sortDirection)
-    searchParams.set("sortDirection", params.sortDirection);
-  if (params.status) searchParams.set("status", params.status);
-  if (params.priority) searchParams.set("priority", params.priority);
-  if (params.assigneeId) searchParams.set("assigneeId", params.assigneeId);
-  if (params.q) searchParams.set("q", params.q);
-
   return apiRequest<ApiListResponse<TicketListItem>>(
     "GET",
-    `/tickets?${searchParams.toString()}`
+    `/tickets${buildSearchParams(params)}`
   );
 }
 
@@ -93,4 +133,12 @@ export async function getTicketActivity(
   ticketId: string
 ): Promise<ApiResponse<TicketActivity[]>> {
   return apiRequest<ApiResponse<TicketActivity[]>>("GET", `/tickets/${ticketId}/activity`);
+}
+
+// ── Epics ────────────────────────────────────────────────────────
+
+export async function getProjectEpics(
+  projectKey: string
+): Promise<ApiListResponse<Epic>> {
+  return apiRequest<ApiListResponse<Epic>>("GET", `/projects/${projectKey}/epics`);
 }

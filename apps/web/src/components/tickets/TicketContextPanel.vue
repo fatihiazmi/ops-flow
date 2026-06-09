@@ -3,7 +3,7 @@
     class="ticket-context-panel flex flex-col h-full overflow-y-auto
            border-l border-slate-200 dark:border-slate-800
            bg-slate-50/50 dark:bg-slate-950/30"
-    aria-label="Ticket context panel"
+    aria-label="Issue context panel"
   >
     <div class="p-4 space-y-6">
       <!-- Details section -->
@@ -12,6 +12,31 @@
           Details
         </h3>
         <dl class="space-y-3">
+          <!-- Project -->
+          <div v-if="ticket?.project">
+            <dt class="text-[11px] text-gray-400 dark:text-slate-500 mb-1">Project</dt>
+            <dd class="text-sm text-gray-900 dark:text-slate-200 flex items-center gap-1.5">
+              <span class="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">{{ ticket.project.key }}</span>
+              <span>{{ ticket.project.name }}</span>
+            </dd>
+          </div>
+
+          <!-- Epic -->
+          <div v-if="ticket?.epic">
+            <dt class="text-[11px] text-gray-400 dark:text-slate-500 mb-1">Epic</dt>
+            <dd class="text-sm text-gray-900 dark:text-slate-200">{{ ticket.epic.title }}</dd>
+          </div>
+
+          <!-- Issue Type -->
+          <div>
+            <dt class="text-[11px] text-gray-400 dark:text-slate-500 mb-1">Issue Type</dt>
+            <dd>
+              <span class="inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold capitalize bg-slate-200 dark:bg-slate-800 text-gray-600 dark:text-slate-300">
+                {{ ticket?.issueType ?? "—" }}
+              </span>
+            </dd>
+          </div>
+
           <!-- Status -->
           <div>
             <dt class="text-[11px] text-gray-400 dark:text-slate-500 mb-1">Status</dt>
@@ -47,25 +72,19 @@
           <!-- Due Date -->
           <div v-if="ticket?.dueAt">
             <dt class="text-[11px] text-gray-400 dark:text-slate-500 mb-1">Due Date</dt>
-            <dd class="text-sm text-gray-900 dark:text-slate-200">
-              {{ formattedDueDate }}
-            </dd>
+            <dd class="text-sm text-gray-900 dark:text-slate-200">{{ formattedDueDate }}</dd>
           </div>
 
           <!-- Created -->
           <div>
             <dt class="text-[11px] text-gray-400 dark:text-slate-500 mb-1">Created</dt>
-            <dd class="text-sm text-gray-900 dark:text-slate-200">
-              {{ formattedCreated }}
-            </dd>
+            <dd class="text-sm text-gray-900 dark:text-slate-200">{{ formattedCreated }}</dd>
           </div>
 
           <!-- Updated -->
           <div>
             <dt class="text-[11px] text-gray-400 dark:text-slate-500 mb-1">Updated</dt>
-            <dd class="text-sm text-gray-900 dark:text-slate-200">
-              {{ formattedUpdated }}
-            </dd>
+            <dd class="text-sm text-gray-900 dark:text-slate-200">{{ formattedUpdated }}</dd>
           </div>
         </dl>
       </section>
@@ -76,7 +95,6 @@
           People
         </h3>
 
-        <!-- Assignee -->
         <div class="mb-3">
           <dt class="text-[11px] text-gray-400 dark:text-slate-500 mb-1">Assignee</dt>
           <dd>
@@ -89,18 +107,13 @@
           </dd>
         </div>
 
-        <!-- Reporter -->
         <div>
           <dt class="text-[11px] text-gray-400 dark:text-slate-500 mb-1">Reporter</dt>
           <dd class="flex items-center gap-2">
             <div class="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0">
-              <span class="text-[10px] font-semibold text-blue-400">
-                {{ reporterInitials }}
-              </span>
+              <span class="text-[10px] font-semibold text-blue-400">{{ reporterInitials }}</span>
             </div>
-            <span class="text-sm text-gray-900 dark:text-slate-200 truncate">
-              {{ ticket?.createdBy?.name ?? "—" }}
-            </span>
+            <span class="text-sm text-gray-900 dark:text-slate-200 truncate">{{ ticket?.createdBy?.name ?? "—" }}</span>
           </dd>
         </div>
       </section>
@@ -135,11 +148,8 @@ const priorityBadgeClass = computed(() => {
 const fmt = (d: string | undefined) => {
   if (!d) return "—";
   return new Date(d).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
+    month: "short", day: "numeric", year: "numeric",
+    hour: "2-digit", minute: "2-digit",
   });
 };
 

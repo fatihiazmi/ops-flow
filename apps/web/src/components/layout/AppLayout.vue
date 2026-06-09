@@ -31,12 +31,19 @@ import { useRouter } from "vue-router";
 import AppSidebar from "./AppSidebar.vue";
 import AppTopbar from "./AppTopbar.vue";
 import CreateTicketDialog from "../tickets/CreateTicketDialog.vue";
+import { useProjectStore } from "../../app/stores/project.store.js";
 
 const router = useRouter();
+const projectStore = useProjectStore();
 const showCreateDialog = ref(false);
 
-function onTicketCreated(ticket: { id: string }) {
+function onTicketCreated(ticket: { issueKey?: string; id: string }) {
   showCreateDialog.value = false;
-  router.push(`/tickets/${ticket.id}`);
+  const pk = projectStore.currentProjectKey || "OPS";
+  if (ticket.issueKey) {
+    router.push(`/projects/${pk}/issues/${ticket.issueKey}`);
+  } else {
+    router.push(`/projects/${pk}/issues`);
+  }
 }
 </script>

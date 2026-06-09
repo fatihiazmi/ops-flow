@@ -3,7 +3,7 @@
     <!-- Header: title + count -->
     <div class="flex-shrink-0 px-4 py-3 border-b border-slate-200 dark:border-slate-800">
       <div class="flex items-center justify-between">
-        <h2 class="text-sm font-semibold text-gray-900 dark:text-slate-100">Tickets</h2>
+        <h2 class="text-sm font-semibold text-gray-900 dark:text-slate-100">Issues</h2>
         <span v-if="meta" class="text-xs text-gray-400 dark:text-slate-500 tabular-nums">
           {{ meta.total }}
         </span>
@@ -23,14 +23,14 @@
         <input
           v-model="searchInput"
           type="search"
-          placeholder="Search tickets..."
+          placeholder="Search issues..."
           class="w-full pl-7 pr-3 py-1.5 text-xs rounded-lg
                  bg-white dark:bg-slate-800/50
                  border border-slate-200 dark:border-slate-700
                  text-gray-900 dark:text-slate-100
                  placeholder-gray-400 dark:placeholder-slate-500
                  focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500"
-          aria-label="Search tickets"
+          aria-label="Search issues"
         />
       </div>
 
@@ -75,19 +75,12 @@
       <!-- Error -->
       <div v-else-if="error" class="p-4 text-center">
         <p class="text-sm text-red-500 mb-2">{{ error }}</p>
-        <button
-          @click="fetchTickets"
-          class="text-xs text-blue-500 hover:text-blue-400"
-        >
-          Retry
-        </button>
+        <button @click="fetchTickets" class="text-xs text-blue-500 hover:text-blue-400">Retry</button>
       </div>
 
       <!-- Empty -->
       <div v-else-if="!tickets.length" class="py-8 text-center">
-        <p class="text-sm text-gray-400 dark:text-slate-500">
-          No tickets found.
-        </p>
+        <p class="text-sm text-gray-400 dark:text-slate-500">No issues found.</p>
       </div>
 
       <!-- Ticket cards -->
@@ -96,7 +89,7 @@
           v-for="ticket in tickets"
           :key="ticket.id"
           :ticket="ticket"
-          :is-selected="ticket.id === selectedTicketId"
+          :is-selected="ticket.issueKey === selectedTicketId"
         />
 
         <!-- Pagination -->
@@ -106,9 +99,7 @@
             @click="goToPage(Number(filters.page) - 1)"
             class="text-[11px] text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300
                    disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-          >
-            Previous
-          </button>
+          >Previous</button>
           <span class="text-[11px] text-gray-400 dark:text-slate-500 tabular-nums">
             {{ filters.page }} / {{ meta.totalPages }}
           </span>
@@ -117,9 +108,7 @@
             @click="goToPage(Number(filters.page) + 1)"
             class="text-[11px] text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300
                    disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-          >
-            Next
-          </button>
+          >Next</button>
         </div>
       </template>
     </div>
@@ -133,12 +122,13 @@ import { useTicketList } from "../../composables/useTicketList";
 import { useDebouncedRef } from "../../composables/useDebouncedRef";
 import TicketCard from "./TicketCard.vue";
 
-defineProps<{
+const props = defineProps<{
   selectedTicketId?: string;
+  projectKey?: string;
 }>();
 
 const route = useRoute();
-const { tickets, meta, isLoading, error, filters, fetchTickets, updateQuery } = useTicketList();
+const { tickets, meta, isLoading, error, filters, fetchTickets, updateQuery } = useTicketList(props.projectKey);
 
 // ── Search ─────────────────────────────────────────────────────────
 const rawSearch = ref((route.query.q as string) || "");
@@ -181,7 +171,7 @@ function goToPage(page: number) {
   updateQuery({ page: String(page) });
 }
 
-// ── Sync search from URL (when navigating via sidebar saved views) ─
+// ── Sync search from URL ──────────────────────────────────────────
 watch(() => route.query.q, (val) => {
   rawSearch.value = (val as string) || "";
 });

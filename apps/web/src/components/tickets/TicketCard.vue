@@ -1,6 +1,6 @@
 <template>
   <router-link
-    :to="`/tickets/${ticket.id}`"
+    :to="`/projects/${projectKey}/issues/${ticket.issueKey}`"
     class="ticket-card block relative rounded-xl border transition-all duration-150 group
            bg-white dark:bg-slate-900/50
            border-slate-200 dark:border-slate-800
@@ -17,10 +17,10 @@
     ></div>
 
     <div class="pl-4 pr-3 py-3">
-      <!-- Top row: ID/key + priority badge -->
+      <!-- Top row: issue key + priority badge -->
       <div class="flex items-center gap-2 mb-1.5">
-        <span class="text-[11px] font-mono text-gray-400 dark:text-slate-500 tabular-nums">
-          T-{{ ticket.id.slice(0, 6) }}
+        <span class="text-[11px] font-mono text-gray-400 dark:text-slate-500 tabular-nums font-medium">
+          {{ ticket.issueKey ?? "—" }}
         </span>
         <div class="flex-1"></div>
         <span
@@ -36,8 +36,9 @@
         {{ ticket.title }}
       </p>
 
-      <!-- Meta row: status, assignee, due date -->
+      <!-- Meta row: issue type, status, assignee -->
       <div class="flex items-center gap-3 text-[11px] text-gray-500 dark:text-slate-400">
+        <span class="text-[10px] capitalize opacity-70">{{ ticket.issueType }}</span>
         <span class="inline-flex items-center gap-1 flex-shrink-0">
           <span class="w-1.5 h-1.5 rounded-full flex-shrink-0" :class="statusDotClass"></span>
           {{ statusLabel }}
@@ -60,9 +61,14 @@
         </span>
       </div>
 
-      <!-- Footer: category -->
-      <div v-if="ticket.category" class="flex items-center gap-2 mt-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-        <span class="text-[11px] text-gray-400 dark:text-slate-500 capitalize">
+      <!-- Footer: epic + category -->
+      <div class="flex items-center gap-2 mt-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+        <span v-if="ticket.epic" class="text-[11px] text-blue-500 dark:text-blue-400 truncate">
+          Epic: {{ ticket.epic.title }}
+        </span>
+        <span v-else class="text-[11px] text-gray-400 dark:text-slate-600 italic">No epic</span>
+        <span class="flex-1"></span>
+        <span v-if="ticket.category" class="text-[11px] text-gray-400 dark:text-slate-500 capitalize">
           {{ ticket.category.replace(/_/g, " ") }}
         </span>
       </div>
@@ -72,12 +78,16 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
+import { useRoute } from "vue-router";
 import type { TicketListItem } from "@opsflow/shared";
 
 const props = defineProps<{
   ticket: TicketListItem;
   isSelected?: boolean;
 }>();
+
+const route = useRoute();
+const projectKey = computed(() => (route.params.projectKey as string) || "OPS");
 
 const priorityLabel = computed(() => {
   return props.ticket.priority.charAt(0).toUpperCase() + props.ticket.priority.slice(1);

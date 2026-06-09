@@ -48,8 +48,9 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { getTicketActivity } from "../../services/ticketService.js";
+import { getUsers } from "../../services/userService.js";
 import { useNotificationStore } from "../../app/stores/notification.store.js";
-import type { TicketActivity } from "@opsflow/shared";
+import type { TicketActivity, PublicUser } from "@opsflow/shared";
 
 const props = defineProps<{
   ticketId: string;
@@ -59,6 +60,22 @@ const notificationStore = useNotificationStore();
 
 const activity = ref<TicketActivity[]>([]);
 const isLoading = ref(true);
+const userMap = ref<Map<string, string>>(new Map());
+
+async function loadUserMap() {
+  try {
+    const response = await getUsers();
+    const users: PublicUser[] = response.data;
+    userMap.value = new Map(users.map((u) => [u.id, u.name]));
+  } catch {
+    // Non-critical — names will fall back to showing raw values
+  }
+}
+
+function resolveName(idOrNull: string | null): string {
+  if (!idOrNull) return "Unassigned";
+  return userMap.value.get(idOrNull) || idOrNull;
+}
 
 async function fetchActivity() {
   isLoading.value = true;
@@ -82,7 +99,7 @@ function formatEvent(event: TicketActivity): string {
     case "priority_changed":
       return `changed priority from ${event.fromValue || "-"} to ${event.toValue || "-"}`;
     case "assignee_changed":
-      return `changed assignee from ${event.fromValue || "Unassigned"} to ${event.toValue || "Unassigned"}`;
+      return `changed assignee from ${resolveName(event.fromValue)} to ${resolveName(event.toValue)}`;
     case "comment_added":
       return "added a comment";
     default:
@@ -94,7 +111,9 @@ function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleString();
 }
 
-onMounted(fetchActivity);
+onMounted(async () => {
+  await Promise.all([loadUserMap(), fetchActivity()]);
+});
 
 defineExpose({ fetchActivity });
 </script>

@@ -1,10 +1,10 @@
 import { ref, watch, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { getTickets } from "../services/ticketService.js";
+import { getProjectIssues } from "../services/ticketService.js";
 import { useSettingsStore } from "../app/stores/settings.store.js";
 import type { ApiListResponse, TicketListItem } from "@opsflow/shared";
 
-export function useTicketList() {
+export function useTicketList(projectKey?: string) {
   const route = useRoute();
   const router = useRouter();
   const settings = useSettingsStore();
@@ -21,25 +21,32 @@ export function useTicketList() {
     sortDirection: (route.query.sortDirection as string) || "desc",
     status: (route.query.status as string) || undefined,
     priority: (route.query.priority as string) || undefined,
+    issueType: (route.query.issueType as string) || undefined,
+    epicId: (route.query.epicId as string) || undefined,
+    noEpic: route.query.noEpic === "true" ? true : undefined,
     assigneeId: (route.query.assigneeId as string) || undefined,
     q: (route.query.q as string) || undefined,
   }));
+
+  const currentProjectKey = computed(() =>
+    projectKey ?? (route.params.projectKey as string) ?? "OPS"
+  );
 
   async function fetchTickets() {
     isLoading.value = true;
     error.value = null;
     try {
-      const response = await getTickets(filters.value);
+      const response = await getProjectIssues(currentProjectKey.value, filters.value);
       tickets.value = response.data;
       meta.value = response.meta;
     } catch (e) {
-      error.value = e instanceof Error ? e.message : "Failed to load tickets";
+      error.value = e instanceof Error ? e.message : "Failed to load issues";
     } finally {
       isLoading.value = false;
     }
   }
 
-  function updateQuery(updates: Record<string, string | number | undefined>) {
+  function updateQuery(updates: Record<string, string | number | boolean | undefined>) {
     const query: Record<string, string> = {};
     for (const [key, value] of Object.entries({ ...route.query, ...updates })) {
       if (value !== undefined && value !== "") {
@@ -50,7 +57,7 @@ export function useTicketList() {
   }
 
   watch(
-    () => route.query,
+    () => [route.query, currentProjectKey.value],
     () => {
       fetchTickets();
     },

@@ -9,7 +9,9 @@ import {
 import {
   findManyTickets,
   findTicketById,
+  findTicketByIssueKey,
   countTickets,
+  getNextIssueNumber,
   insertTicket,
   updateTicket,
   updateTicketStatus,
@@ -18,6 +20,8 @@ import {
 import { findCommentsByTicketId, insertComment } from "./comment.repository.js";
 import { findActivityByTicketId, insertActivity } from "./activity.repository.js";
 import { findUserById } from "../auth/auth.repository.js";
+import { findProjectByKey } from "../projects/project.repository.js";
+import { findEpicById } from "../epics/epic.repository.js";
 import { isValidStatusTransition } from "./ticket.workflow.js";
 import { AppError } from "../../utils/errors.js";
 import { listSuccess, success } from "../../utils/api-response.js";
@@ -25,16 +29,25 @@ import { db } from "../../db/drizzle.js";
 import { invalidateDashboardCache } from "../dashboard/dashboard.service.js";
 import type { JWTPayload } from "jose";
 
-export async function listTickets(query: unknown) {
+export async function listTickets(query: unknown, projectKey?: string) {
   const parsed = ticketListQuerySchema.safeParse(query);
   if (!parsed.success) {
     throw new AppError("VALIDATION_ERROR", "Invalid query parameters", 400);
   }
 
+  let projectId: string | undefined;
+  if (projectKey) {
+    const project = await findProjectByKey(projectKey);
+    if (!project) {
+      throw new AppError("PROJECT_NOT_FOUND", `Project "${projectKey}" not found`, 404);
+    }
+    projectId = project.id;
+  }
+
   const { page, pageSize, sortBy, sortDirection, ...filters } = parsed.data;
   const [data, total] = await Promise.all([
-    findManyTickets(parsed.data),
-    countTickets(filters),
+    findManyTickets(parsed.data, projectId),
+    countTickets(filters, projectId),
   ]);
 
   const totalPages = Math.ceil(total / pageSize);
@@ -44,18 +57,42 @@ export async function listTickets(query: unknown) {
 export async function getTicketById(id: string) {
   const ticket = await findTicketById(id);
   if (!ticket) {
-    throw new AppError("TICKET_NOT_FOUND", "Ticket not found", 404);
+    throw new AppError("TICKET_NOT_FOUND", "Issue not found", 404);
   }
   return success(ticket);
 }
 
-export async function createTicket(body: unknown, user: JWTPayload) {
+export async function getTicketByIssueKey(projectKey: string, issueKey: string) {
+  const project = await findProjectByKey(projectKey);
+  if (!project) {
+    throw new AppError("PROJECT_NOT_FOUND", `Project "${projectKey}" not found`, 404);
+  }
+
+  const fullKey = `${project.key}-${String(issueKey).replace(/^\D+/, "")}`;
+  const ticket = await findTicketByIssueKey(fullKey);
+  if (!ticket) {
+    throw new AppError("TICKET_NOT_FOUND", `Issue ${fullKey} not found`, 404);
+  }
+  return success(ticket);
+}
+
+export async function createTicket(body: unknown, user: JWTPayload, projectKey?: string) {
   const parsed = createTicketSchema.safeParse(body);
   if (!parsed.success) {
     throw new AppError("VALIDATION_ERROR", "Invalid request body", 400);
   }
 
   const data = parsed.data;
+
+  if (!projectKey) {
+    throw new AppError("VALIDATION_ERROR", "Project key is required", 400);
+  }
+
+  const project = await findProjectByKey(projectKey);
+  if (!project) {
+    throw new AppError("PROJECT_NOT_FOUND", `Project "${projectKey}" not found`, 404);
+  }
+
   if (data.assigneeId) {
     const assignee = await findUserById(data.assigneeId);
     if (!assignee) {
@@ -63,15 +100,33 @@ export async function createTicket(body: unknown, user: JWTPayload) {
     }
   }
 
+  if (data.epicId) {
+    const epic = await findEpicById(data.epicId);
+    if (!epic) {
+      throw new AppError("EPIC_NOT_FOUND", "Epic not found", 400);
+    }
+    if (epic.projectId !== project.id) {
+      throw new AppError("VALIDATION_ERROR", "Epic does not belong to the selected project", 400);
+    }
+  }
+
   const createdById = user.sub as string;
 
   const ticket = await db.transaction(async (tx) => {
+    const issueNumber = await getNextIssueNumber(project.id, tx);
+    const issueKey = `${project.key}-${issueNumber}`;
+
     const newTicket = await insertTicket(
       {
         title: data.title,
         description: data.description,
         priority: data.priority,
         category: data.category,
+        issueType: data.issueType,
+        issueNumber,
+        issueKey,
+        projectId: project.id,
+        epicId: data.epicId ?? null,
         assigneeId: data.assigneeId ?? null,
         createdById,
         status: "open",
@@ -85,7 +140,7 @@ export async function createTicket(body: unknown, user: JWTPayload) {
         ticketId: newTicket.id,
         actorId: createdById,
         eventType: "ticket_created",
-        metadata: { title: data.title },
+        metadata: { title: data.title, issueKey },
       },
       tx
     );
@@ -95,13 +150,8 @@ export async function createTicket(body: unknown, user: JWTPayload) {
 
   invalidateDashboardCache();
 
-  return success({
-    id: ticket.id,
-    title: ticket.title,
-    status: ticket.status as "open" | "in_progress" | "resolved" | "closed",
-    priority: ticket.priority as "low" | "medium" | "high" | "critical",
-    category: ticket.category as "access" | "billing" | "bug" | "feature_request" | "infrastructure" | "other",
-  });
+  const detail = await findTicketById(ticket.id);
+  return success(detail ?? { id: ticket.id, issueKey: ticket.issueKey, title: ticket.title });
 }
 
 export async function patchTicket(id: string, body: unknown, user: JWTPayload) {
@@ -112,7 +162,7 @@ export async function patchTicket(id: string, body: unknown, user: JWTPayload) {
 
   const ticket = await findTicketById(id);
   if (!ticket) {
-    throw new AppError("TICKET_NOT_FOUND", "Ticket not found", 404);
+    throw new AppError("TICKET_NOT_FOUND", "Issue not found", 404);
   }
 
   const data = parsed.data;
@@ -121,7 +171,21 @@ export async function patchTicket(id: string, body: unknown, user: JWTPayload) {
   if (data.description !== undefined) updateData.description = data.description;
   if (data.priority !== undefined) updateData.priority = data.priority;
   if (data.category !== undefined) updateData.category = data.category;
+  if (data.issueType !== undefined) updateData.issueType = data.issueType;
   if (data.dueAt !== undefined) updateData.dueAt = data.dueAt ? new Date(data.dueAt) : null;
+
+  if (data.epicId !== undefined) {
+    if (data.epicId !== null) {
+      const epic = await findEpicById(data.epicId);
+      if (!epic) {
+        throw new AppError("EPIC_NOT_FOUND", "Epic not found", 400);
+      }
+      if (!ticket.project || epic.projectId !== ticket.project.id) {
+        throw new AppError("VALIDATION_ERROR", "Epic does not belong to the issue's project", 400);
+      }
+    }
+    updateData.epicId = data.epicId;
+  }
 
   if (Object.keys(updateData).length === 0) {
     throw new AppError("VALIDATION_ERROR", "At least one field must be provided", 400);
@@ -151,15 +215,8 @@ export async function patchTicket(id: string, body: unknown, user: JWTPayload) {
 
   invalidateDashboardCache();
 
-  return success({
-    id: updated.id,
-    title: updated.title,
-    description: updated.description,
-    priority: updated.priority as "low" | "medium" | "high" | "critical",
-    category: updated.category as "access" | "billing" | "bug" | "feature_request" | "infrastructure" | "other",
-    dueAt: updated.dueAt ? updated.dueAt.toISOString() : null,
-    updatedAt: updated.updatedAt.toISOString(),
-  });
+  const detail = await findTicketById(id);
+  return success(detail ?? updated);
 }
 
 export async function changeTicketStatus(id: string, body: unknown, user: JWTPayload) {
@@ -170,7 +227,7 @@ export async function changeTicketStatus(id: string, body: unknown, user: JWTPay
 
   const ticket = await findTicketById(id);
   if (!ticket) {
-    throw new AppError("TICKET_NOT_FOUND", "Ticket not found", 404);
+    throw new AppError("TICKET_NOT_FOUND", "Issue not found", 404);
   }
 
   const newStatus = parsed.data.status;
@@ -217,7 +274,7 @@ export async function changeTicketAssignee(id: string, body: unknown, user: JWTP
 
   const ticket = await findTicketById(id);
   if (!ticket) {
-    throw new AppError("TICKET_NOT_FOUND", "Ticket not found", 404);
+    throw new AppError("TICKET_NOT_FOUND", "Issue not found", 404);
   }
 
   const newAssigneeId = parsed.data.assigneeId;
@@ -262,7 +319,7 @@ export async function changeTicketAssignee(id: string, body: unknown, user: JWTP
 export async function getTicketComments(ticketId: string) {
   const ticket = await findTicketById(ticketId);
   if (!ticket) {
-    throw new AppError("TICKET_NOT_FOUND", "Ticket not found", 404);
+    throw new AppError("TICKET_NOT_FOUND", "Issue not found", 404);
   }
 
   const comments = await findCommentsByTicketId(ticketId);
@@ -277,7 +334,7 @@ export async function addTicketComment(ticketId: string, body: unknown, user: JW
 
   const ticket = await findTicketById(ticketId);
   if (!ticket) {
-    throw new AppError("TICKET_NOT_FOUND", "Ticket not found", 404);
+    throw new AppError("TICKET_NOT_FOUND", "Issue not found", 404);
   }
 
   const actorId = user.sub as string;
@@ -320,7 +377,7 @@ export async function addTicketComment(ticketId: string, body: unknown, user: JW
 export async function getTicketActivity(ticketId: string) {
   const ticket = await findTicketById(ticketId);
   if (!ticket) {
-    throw new AppError("TICKET_NOT_FOUND", "Ticket not found", 404);
+    throw new AppError("TICKET_NOT_FOUND", "Issue not found", 404);
   }
 
   const activity = await findActivityByTicketId(ticketId);

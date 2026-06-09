@@ -15,7 +15,7 @@
         </div>
         <input
           type="search"
-          placeholder="Search tickets..."
+          placeholder="Search issues..."
           disabled
           class="w-full pl-10 pr-4 py-2 bg-gray-100 dark:bg-slate-800/50
                  border border-gray-200 dark:border-slate-700 rounded-lg text-sm
@@ -39,7 +39,7 @@
         <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
           <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
         </svg>
-        Create Ticket
+        Create Issue
       </button>
 
       <!-- SLA Alerts placeholder -->

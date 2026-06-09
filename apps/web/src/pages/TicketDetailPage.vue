@@ -23,27 +23,42 @@
 
       <!-- Not found -->
       <div v-else-if="!ticket" class="flex-1 flex items-center justify-center p-6">
-        <p class="text-sm text-gray-400 dark:text-slate-500">Ticket not found.</p>
+        <p class="text-sm text-gray-400 dark:text-slate-500">Issue not found.</p>
       </div>
 
       <!-- Ticket loaded -->
       <template v-else>
-        <!-- Header: breadcrumb + key/category + title + meta badges + description -->
+        <!-- Header: breadcrumb + key/type + title + meta badges + description -->
         <div class="flex-shrink-0 px-6 pt-6 pb-5">
           <!-- Breadcrumb -->
           <div class="flex items-center gap-2 text-xs text-gray-400 dark:text-slate-500 mb-3">
-            <router-link to="/tickets" class="hover:text-gray-600 dark:hover:text-slate-300 transition-colors">
-              Tickets
+            <router-link :to="`/projects/${projectKey}`" class="hover:text-gray-600 dark:hover:text-slate-300 transition-colors">
+              Projects
             </router-link>
             <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
               <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
-            <span class="font-mono tracking-tight">T-{{ ticket.id.slice(0, 6) }}</span>
+            <span class="font-medium text-gray-500 dark:text-slate-400">{{ ticket.project?.key ?? "?" }}</span>
+            <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <router-link :to="`/projects/${projectKey}/issues`" class="hover:text-gray-600 dark:hover:text-slate-300 transition-colors">
+              Issues
+            </router-link>
+            <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span class="font-mono tracking-tight">{{ ticket.issueKey ?? "—" }}</span>
             <span
-              v-if="ticket.category"
               class="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider bg-slate-200 dark:bg-slate-800 text-gray-500 dark:text-slate-400"
             >
-              {{ ticket.category.replace(/_/g, " ") }}
+              {{ ticket.issueType }}
+            </span>
+            <span
+              v-if="ticket.epic"
+              class="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider bg-blue-500/10 text-blue-400"
+            >
+              {{ ticket.epic.title }}
             </span>
           </div>
 
@@ -88,7 +103,7 @@
         </div>
 
         <!-- Tabs -->
-        <div class="flex-shrink-0 flex border-b border-slate-200 dark:border-slate-800 px-6" role="tablist" aria-label="Ticket tabs">
+        <div class="flex-shrink-0 flex border-b border-slate-200 dark:border-slate-800 px-6" role="tablist" aria-label="Issue tabs">
           <button
             v-for="tab in tabs"
             :key="tab.key"
@@ -101,27 +116,16 @@
               : 'text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-300 border-b-2 border-transparent'"
           >
             {{ tab.label }}
-            <span
-              v-if="tab.count != null"
-              class="ml-1.5 text-xs opacity-60 tabular-nums"
-            >
-              {{ tab.count }}
-            </span>
+            <span v-if="tab.count != null" class="ml-1.5 text-xs opacity-60 tabular-nums">{{ tab.count }}</span>
           </button>
         </div>
 
         <!-- Tab content -->
         <div class="flex-1 overflow-y-auto">
-          <!-- Comments tab -->
           <div v-if="activeTab === 'comments'" class="p-6 space-y-6">
-            <TicketComments
-              ref="commentsRef"
-              :ticket-id="ticket.id"
-            />
+            <TicketComments ref="commentsRef" :ticket-id="ticket.id" />
             <TicketCommentForm :ticket-id="ticket.id" @submitted="onCommentAdded" />
           </div>
-
-          <!-- Activity tab -->
           <div v-else-if="activeTab === 'activity'" class="p-6">
             <TicketActivityTimeline ref="activityRef" :ticket-id="ticket.id" />
           </div>
@@ -133,11 +137,7 @@
          Right: Context panel (visible on xl+)
          ============================================================ -->
     <div class="hidden xl:block w-72 flex-shrink-0">
-      <TicketContextPanel
-        v-if="ticket"
-        :ticket="ticket"
-        @updated="fetchTicket"
-      />
+      <TicketContextPanel v-if="ticket" :ticket="ticket" @updated="fetchTicket" />
     </div>
   </div>
 </template>
@@ -145,7 +145,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, nextTick, watch } from "vue";
 import { useRoute } from "vue-router";
-import { getTicketById } from "../services/ticketService.js";
+import { getProjectIssue } from "../services/ticketService.js";
 import type { TicketDetail } from "@opsflow/shared";
 import TicketCommentForm from "../components/tickets/TicketCommentForm.vue";
 import TicketComments from "../components/tickets/TicketComments.vue";
@@ -154,23 +154,23 @@ import TicketContextPanel from "../components/tickets/TicketContextPanel.vue";
 
 defineProps<{
   selectedTicketId?: string;
+  projectKey?: string;
 }>();
 
 const route = useRoute();
 
-// ── State ──────────────────────────────────────────────────────────
 const ticket = ref<TicketDetail | null>(null);
 const isLoading = ref(false);
 const error = ref<string | null>(null);
 const activeTab = ref<"comments" | "activity">("comments");
 
-// ── Tab definitions ────────────────────────────────────────────────
+const projectKey = computed(() => (route.params.projectKey as string) || "OPS");
+
 const tabs = computed(() => [
   { key: "comments" as const, label: "Comments", count: null },
   { key: "activity" as const, label: "Activity", count: null },
 ]);
 
-// ── Header computed properties ─────────────────────────────────────
 const headerPriorityClass = computed(() => {
   switch (ticket.value?.priority) {
     case "critical": return "bg-red-500/10 text-red-400";
@@ -208,27 +208,24 @@ const headerCreatedAt = computed(() => {
   });
 });
 
-// ── Child component refs (for re-fetch on workflow change) ────────
 const commentsRef = ref<InstanceType<typeof TicketComments> | null>(null);
 const activityRef = ref<InstanceType<typeof TicketActivityTimeline> | null>(null);
 
-// ── Fetch ──────────────────────────────────────────────────────────
 async function fetchTicket() {
-  const id = route.params.id as string;
-  if (!id) return;
+  const issueKey = route.params.issueKey as string;
+  if (!issueKey) return;
   isLoading.value = true;
   error.value = null;
   try {
-    const response = await getTicketById(id);
+    const response = await getProjectIssue(projectKey.value, issueKey);
     ticket.value = response.data;
   } catch (e) {
-    error.value = e instanceof Error ? e.message : "Failed to load ticket";
+    error.value = e instanceof Error ? e.message : "Failed to load issue";
   } finally {
     isLoading.value = false;
   }
 }
 
-// ── Workflow events ────────────────────────────────────────────────
 async function onCommentAdded() {
   await fetchTicket();
   await nextTick();
@@ -236,13 +233,9 @@ async function onCommentAdded() {
   activityRef.value?.fetchActivity();
 }
 
-// ── Lifecycle ──────────────────────────────────────────────────────
 onMounted(fetchTicket);
 
-// Re-fetch when route param changes (navigating between tickets via queue)
-watch(() => route.params.id, (newId, oldId) => {
-  if (newId && newId !== oldId) {
-    fetchTicket();
-  }
+watch(() => route.params.issueKey, (newKey, oldKey) => {
+  if (newKey && newKey !== oldKey) fetchTicket();
 });
 </script>
